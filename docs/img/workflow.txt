@@ -1,0 +1,79 @@
+┌───────────────────────┐     ┌───────────────────────┐
+│                       │     │                       │
+│   Bloomberg Terminal  │     │  NIFTY 500 List       │
+│   (In Office)         │────▶│  (nifty500_list.csv)  │
+│                       │     │                       │
+└───────────────────────┘     └───────────┬───────────┘
+                                          │
+┌───────────────────────┐                 │
+│                       │                 │
+│   Bloomberg Terminal  │                 │
+│   (In Office)         │                 │
+│                       │                 │
+└───────────┬───────────┘                 │
+            │                             │
+            ▼                             │
+┌───────────────────────┐                 │
+│                       │                 │
+│  Historical Prices    │                 │
+│  (historical_prices.  │                 │
+│   csv)                │                 │
+│                       │                 │
+└───────────┬───────────┘                 │
+            │                             │
+            │             ┌───────────────▼───────────────┐
+            │             │                               │
+            └────────────▶│  Data Loader                  │
+                          │  - Load NIFTY 500 List        │
+                          │  - Load Historical Prices     │
+                          │  - Prepare Monthly Data       │
+                          │                               │
+                          └───────────────┬───────────────┘
+                                          │
+                                          ▼
+                          ┌───────────────────────────────┐
+                          │                               │
+                          │  Return Calculator            │
+                          │  - Calculate Yearly Returns   │
+                          │  - Validate Returns           │
+                          │                               │
+                          └───────────────┬───────────────┘
+                                          │
+                                          ▼
+                          ┌───────────────────────────────┐
+                          │                               │
+                          │  Ranking System               │
+                          │  - Rank Stocks by Return      │
+                          │  - Analyze Rankings           │
+                          │                               │
+                          └───────────────┬───────────────┘
+                                          │
+                                          ▼
+                          ┌───────────────────────────────┐
+                          │                               │
+                          │  Rank Delta Calculator        │
+                          │  - Calculate Rank Delta       │
+                          │  - Analyze Rank Delta         │
+                          │                               │
+                          └───────────────┬───────────────┘
+                                          │
+                                          ▼
+                          ┌───────────────────────────────┐
+                          │                               │
+                          │  Output Generator             │
+                          │  - Latest Rankings            │
+                          │  - Rank Delta                 │
+                          │  - Summary Statistics         │
+                          │  - (Optional) Historical      │
+                          │                               │
+                          └───────────────┬───────────────┘
+                                          │
+            ┌─────────────┬──────────────┬─────────────┐
+            │             │              │             │
+            ▼             ▼              ▼             ▼
+┌───────────────────┐ ┌────────────┐ ┌────────────┐ ┌────────────────┐
+│                   │ │            │ │            │ │                │
+│ Latest Rankings   │ │ Rank Delta │ │ Summary    │ │ Historical     │
+│ CSV               │ │ CSV        │ │ Statistics │ │ Rankings CSV   │
+│                   │ │            │ │            │ │ (Optional)     │
+└───────────────────┘ └────────────┘ └────────────┘ └────────────────┘ 
