@@ -3,7 +3,42 @@
 ## Project Overview
 This project implements an automated stock ranking system for Renaissance Investment Managers. The system is designed to replace a manual process of collecting and analyzing stock data with an efficient Python-based solution. It automates the calculation of yearly returns for NIFTY 500 stocks on a monthly rolling basis, ranks stocks based on these returns, and analyzes rank changes month-over-month.
 
-![System Workflow](docs/img/workflow.png)
+```
+┌───────────────────────────────────────────────────────────┐
+│                                                             │
+│                 Renaissance Stock Ranking System            │
+│                                                             │
+└─────────────────────────────┬─────────────────────────────┘
+                              │
+                              ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│ Bloomberg     │     │ CSV Files     │     │ Data          │
+│ Terminal      │────>│ - NIFTY 500   │────>│ Loader        │
+│ (Data Source) │     │ - Prices      │     │               │
+└───────────────┘     └───────────────┘     └───────┬───────┘
+                                                    │
+                                                    ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│ Output        │     │ Rank Delta    │     │ Return        │
+│ Generator     │<────│ Calculator    │<────│ Calculator    │
+│               │     │               │     │               │
+└───────┬───────┘     └───────┬───────┘     └───────────────┘
+        │                     │
+        │                     ▼
+        │             ┌───────────────┐
+        │             │ Ranking       │
+        │             │ System        │
+        │             │               │
+        │             └───────┬───────┘
+        │                     │
+        ▼                     │
+┌───────────────┐             │
+│ Output Files  │<────────────┘
+│ - Rankings    │
+│ - Rank Delta  │
+│ - Summary     │
+└───────────────┘
+```
 
 ## Problem Statement
 Previously, Renaissance Investment Managers relied on a manual process for:
@@ -174,7 +209,7 @@ For detailed troubleshooting guide, see [User Guide](docs/user_guide.md).
 
 ## Glossary of Terms
 
-For team members who may be less familiar with Python or technical terminology, here's a quick reference:
+Here's a quick reference:
 
 - **CSV**: Comma-Separated Values file - a simple text file format that stores tabular data with commas between values
 - **ISIN**: International Securities Identification Number - a 12-character alphanumeric code that uniquely identifies a specific security
@@ -185,9 +220,9 @@ For team members who may be less familiar with Python or technical terminology, 
 - **Script**: A file containing Python code that can be executed
 - **Module**: A Python file containing definitions and statements that can be imported and used in other Python files
 
-## Installation for Non-Technical Users
+## Installation
 
-If you're not familiar with Python or command-line interfaces, here's a simplified guide:
+Here's a simplified guide:
 
 ### Windows Installation
 1. **Install Python**:
