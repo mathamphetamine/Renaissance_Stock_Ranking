@@ -2,6 +2,39 @@
 
 This guide outlines the steps to extract the necessary data from the Bloomberg Terminal for the NIFTY 500 Stock Ranking System. This extraction process needs to be performed while in the office with access to the Bloomberg Terminal.
 
+## Quick Reference Workflow
+
+```
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 1: Open Bloomberg Terminal or Bloomberg Excel Add-in     │
+└───────────────────────┬───────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 2: Extract NIFTY 500 Constituent List with ISINs         │
+└───────────────────────┬───────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 3: Save as nifty500_list.csv                             │
+└───────────────────────┬───────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 4: Extract Monthly Closing Prices for all NIFTY 500      │
+└───────────────────────┬───────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 5: Save as historical_prices.csv                         │
+└───────────────────────┬───────────────────────────────────────┘
+                        │
+                        ▼
+┌───────────────────────────────────────────────────────────────┐
+│ STEP 6: Place both files in the 'data' folder                 │
+└───────────────────────────────────────────────────────────────┘
+```
+
 ## Data Requirements
 
 The system requires two primary datasets:
@@ -121,3 +154,44 @@ After extracting the data:
 3. Place both files in the `data/` directory of the NIFTY 500 Stock Ranking System.
 
 The system will then process these files to generate the required analysis and outputs. 
+
+## For Non-Technical Users
+
+If you're not familiar with data extraction or CSV files, here's a simplified explanation:
+
+### What Are We Doing?
+We need two tables of information:
+1. **A list of all companies in the NIFTY 500 index** (with their unique identifiers)
+2. **The month-end stock prices for these companies** (over several years)
+
+### What Should the Files Look Like?
+
+#### NIFTY 500 List File (nifty500_list.csv):
+This should look like a table with company information:
+
+```
+ISIN,Name,Ticker
+INE009A01021,Infosys Ltd,INFO IN
+INE062A01020,Tata Consultancy Services Ltd,TCS IN
+INE040A01034,HDFC Bank Ltd,HDFCB IN
+```
+
+#### Historical Prices File (historical_prices.csv):
+This should look like a table with stock prices by date:
+
+```
+ISIN,Date,Price
+INE009A01021,2022-01-31,1680.75
+INE009A01021,2022-02-28,1722.30
+INE062A01020,2022-01-31,3698.15
+```
+
+### Checklist Before Running the System:
+
+- Both files are saved as CSV (you can create these in Excel, then "Save As" CSV)
+- The column names are exactly as shown above
+- Dates are in YYYY-MM-DD format
+- Both files are placed in the "data" folder of the project
+- ISIN values are consistent between both files
+
+If you have any trouble with extraction or the file format, please contact the IT department for assistance. 

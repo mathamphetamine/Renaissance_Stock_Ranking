@@ -23,6 +23,41 @@ The Automated Stock Ranking System for Renaissance Investment Managers is design
 
 This replaces the previous manual process of collecting and analyzing this data in Excel spreadsheets.
 
+### System Workflow Diagram
+
+```
+┌───────────────┐         ┌───────────────┐         ┌───────────────┐
+│ Bloomberg     │         │ CSV Files     │         │ Python System │
+│ Terminal      │────────>│ - NIFTY 500   │────────>│ (This Tool)   │
+│ (Data Source) │         │ - Prices      │         │               │
+└───────────────┘         └───────────────┘         └───────┬───────┘
+                                                            │
+                                                            ▼
+                          ┌───────────────┐         ┌───────────────┐
+                          │ Analysis &    │<────────│ Data          │
+                          │ Visualization │         │ Processing    │
+                          │ (Optional)    │         │ - Returns     │
+                          └───────────────┘         │ - Rankings    │
+                                                    │ - Rank Changes│
+                                                    └───────┬───────┘
+                                                            │
+                                                            ▼
+                                                    ┌───────────────┐
+                                                    │ Output Files  │
+                                                    │ - Rankings    │
+                                                    │ - Rank Delta  │
+                                                    │ - Summary     │
+                                                    └───────────────┘
+```
+
+### For Non-Technical Users
+
+The system works like an assembly line:
+1. We get raw data from Bloomberg (like getting ingredients for a recipe)
+2. We save this data in simple CSV files (like putting ingredients in containers)
+3. The Python system processes this data (like cooking the ingredients)
+4. The system produces output files with the results (like serving the finished dish)
+
 ## Installation and Setup
 
 ### System Requirements

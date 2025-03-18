@@ -32,6 +32,7 @@ This Python-based system addresses these issues by:
 - Month-over-month rank change tracking (rank delta)
 - Statistical analysis of returns and rankings
 - Automated output generation in CSV format
+- Visualization tool for easy data interpretation (no Python knowledge required)
 - Robust error handling and validation
 
 ## Project Structure
@@ -119,6 +120,13 @@ This system follows a specific workflow due to restricted Bloomberg Terminal acc
 python src/main.py
 ```
 
+#### Generating Visualizations
+To create visual charts from the output data (requires matplotlib and seaborn):
+```bash
+python docs/visualize_results.py
+```
+This will generate charts showing return distributions, top performers, and rank changes in the `output/visualizations` directory.
+
 #### Advanced Usage with Custom Paths
 ```bash
 python src/main.py --nifty500-file data/custom_nifty500_list.csv --price-file data/custom_prices.csv --output-dir custom_output --generate-historical
@@ -164,6 +172,87 @@ For format details, see [Data Extraction Guide](docs/data_extraction_guide.md).
 
 For detailed troubleshooting guide, see [User Guide](docs/user_guide.md).
 
+## Glossary of Terms
+
+For team members who may be less familiar with Python or technical terminology, here's a quick reference:
+
+- **CSV**: Comma-Separated Values file - a simple text file format that stores tabular data with commas between values
+- **ISIN**: International Securities Identification Number - a 12-character alphanumeric code that uniquely identifies a specific security
+- **Terminal Command/Command Line**: A text-based interface to control your computer by typing commands
+- **Virtual Environment**: An isolated Python environment that allows packages to be installed for use by a particular project only
+- **Repository**: A storage location for software packages, typically used with version control systems like Git
+- **Dependencies**: External software packages that your project relies on to function
+- **Script**: A file containing Python code that can be executed
+- **Module**: A Python file containing definitions and statements that can be imported and used in other Python files
+
+## Installation for Non-Technical Users
+
+If you're not familiar with Python or command-line interfaces, here's a simplified guide:
+
+### Windows Installation
+1. **Install Python**:
+   - Download Python 3.8 or higher from [python.org](https://www.python.org/downloads/)
+   - During installation, check "Add Python to PATH"
+   - Click "Install Now"
+
+2. **Get the Stock Ranking System**:
+   - Download the ZIP file of this project from GitHub
+   - Extract the ZIP file to a folder on your computer
+
+3. **Open Command Prompt**:
+   - Press Windows+R, type "cmd" and press Enter
+   - Navigate to the project folder:
+     ```
+     cd path\to\Renaissance_Stock_Ranking
+     ```
+
+4. **Set Up the System**:
+   - Create a virtual environment (one-time setup):
+     ```
+     python -m venv venv
+     venv\Scripts\activate
+     pip install -r requirements.txt
+     ```
+
+5. **Use the System**:
+   - Place your data files in the "data" folder
+   - Run the system:
+     ```
+     python src\main.py
+     ```
+   - Check the "output" folder for results
+
+### Mac/Linux Installation
+1. **Install Python** (if not already installed):
+   - Mac: Install Homebrew, then run `brew install python3`
+   - Linux: Use package manager, e.g., `sudo apt install python3`
+
+2. **Get the Stock Ranking System**:
+   - Download the ZIP file from GitHub
+   - Extract to your preferred location
+
+3. **Open Terminal**:
+   - Navigate to the project folder:
+     ```
+     cd path/to/Renaissance_Stock_Ranking
+     ```
+
+4. **Set Up the System**:
+   - Create a virtual environment (one-time setup):
+     ```
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install -r requirements.txt
+     ```
+
+5. **Use the System**:
+   - Place your data files in the "data" folder
+   - Run the system:
+     ```
+     python src/main.py
+     ```
+   - Check the "output" folder for results
+
 ## GitHub Deployment Instructions
 
 If you need to deploy this project to your own GitHub repository:
@@ -183,7 +272,7 @@ If you need to deploy this project to your own GitHub repository:
    ```
 
 ## Author
-Intern at Renaissance Investment Managers
+Renaissance Investment Managers
 
 ## License
-For internal use at Renaissance Investment Managers only
+Proprietary - For use at Renaissance Investment Managers only
