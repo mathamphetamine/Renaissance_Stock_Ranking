@@ -106,7 +106,7 @@ Renaissance_Stock_Ranking/
 #### Option 1: Clone from GitHub (Recommended)
 1. Clone this repository:
    ```bash
-   git clone https://github.com/YourUsername/Renaissance_Stock_Ranking.git
+   git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
    cd Renaissance_Stock_Ranking
    ```
 
@@ -301,7 +301,7 @@ If you need to deploy this project to your own GitHub repository:
    ```
 3. Add your GitHub repository as remote and push:
    ```bash
-   git remote add origin https://github.com/YourUsername/Renaissance_Stock_Ranking.git
+   git remote add origin https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
    git branch -M main
    git push -u origin main
    ```
