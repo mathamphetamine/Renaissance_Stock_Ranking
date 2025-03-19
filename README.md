@@ -73,8 +73,10 @@ This Python-based system addresses these issues by:
 - **Rank Change Tracking**: Tracks month-to-month rank changes to identify improving or declining stocks.
 - **Data Visualization**: Automatically generates insightful charts and graphs from ranked data without requiring Python knowledge.
 - **Sector Analysis**: Analyzes stock performance by sector, identifying top-performing sectors and sector concentration metrics.
+- **Financial Metrics Integration**: Incorporates key financial metrics (P/E, P/B, ROE, etc.) for deeper analysis.
 - **Comprehensive Output**: Produces detailed CSV files with ranking results and performance metrics.
 - **Flexible Configuration**: Easily customizable through configuration parameters.
+- **Bloomberg API Integration**: Optional automated data extraction including sector information and financial metrics.
 
 ## Project Structure
 ```
@@ -84,9 +86,14 @@ Renaissance_Stock_Ranking/
 ├── docs/                  # Documentation
 │   ├── data_extraction_guide.md  # Guide for Bloomberg data extraction
 │   ├── example_usage.ipynb       # Jupyter notebook with example usage
+│   ├── sector_analysis.py        # Sector-based analysis script
+│   ├── README_sector_analysis.md # Detailed guide for sector analysis
+│   ├── bloomberg_api_guide.md    # Guide for Bloomberg API integration
+│   ├── visualize_results.py      # Visualization script for ranking outputs
 │   ├── img/                      # Images for documentation
 │   └── user_guide.md             # Detailed user guide
 ├── output/                # Generated output files (created when run)
+│   └── sector_analysis/   # Sector analysis outputs (created when run)
 ├── src/                   # Source code
 │   ├── __init__.py
 │   ├── data_loader.py     # Functions for loading data from files
@@ -94,8 +101,11 @@ Renaissance_Stock_Ranking/
 │   ├── ranking_system.py  # Functions for ranking stocks
 │   ├── rank_delta_calculator.py  # Functions for calculating rank changes
 │   ├── output_generator.py  # Functions for generating output files
+│   ├── bloomberg_data_extractor.py # Optional Bloomberg API integration
 │   └── main.py            # Main script to run the system
 ├── tests/                 # Test scripts
+│   ├── test_ranking_system.py    # Tests for core ranking functionality
+│   └── test_sector_analysis.py   # Tests for sector analysis
 ├── README.md              # This file
 └── requirements.txt       # Python dependencies
 ```
@@ -206,12 +216,30 @@ This will generate comprehensive sector reports and visualizations in the `outpu
 - Top stocks by sector
 - Sector concentration analysis
 - Financial metrics by sector
-- Investment strategy recommendations
+- Investment strategy recommendations based on sector insights
 
 For customization options, run:
 ```
 python docs/sector_analysis.py --help
 ```
+
+See the [Sector Analysis Guide](docs/README_sector_analysis.md) for detailed documentation on the sector analysis capabilities.
+
+### Bloomberg API Integration
+
+For automated data extraction including sector information and financial metrics:
+
+1. Set up Bloomberg API (BLPAPI) according to the [Bloomberg API Guide](docs/bloomberg_api_guide.md)
+2. Run the data extractor:
+   ```
+   python src/bloomberg_data_extractor.py
+   ```
+3. The extractor will automatically retrieve:
+   - NIFTY 500 constituent list with GICS sector classification
+   - Historical price data
+   - Key financial metrics (P/E, P/B, ROE, etc.)
+
+The retrieved data will be ready for use with both the main ranking system and the sector analysis tool.
 
 ## Input Data Requirements
 
@@ -344,3 +372,114 @@ Renaissance Investment Managers
 
 ## License
 Proprietary - For use at Renaissance Investment Managers only
+
+## Usage
+
+### Running the Ranking System
+
+To run the Renaissance Stock Ranking System:
+
+1. Make sure you have installed all dependencies and set up the environment.
+2. Place your data files in the `data` directory:
+   - `nifty500_list.csv`: List of NIFTY 500 constituents with ISINs (and sectors for sector analysis)
+   - `historical_prices.csv`: Historical price data
+3. Run the system using:
+   ```
+   python src/main.py
+   ```
+
+The system will generate output files in the `output` directory.
+
+### Generating Visualizations
+
+To generate visualizations from the ranking outputs:
+
+1. Run the visualization script:
+   ```
+   python docs/visualize_results.py
+   ```
+
+This will create charts in the `output/visualizations` directory, making it easy to interpret the results without needing to understand Python.
+
+### Running Sector Analysis
+
+To perform a comprehensive sector-based analysis after running the main ranking system:
+
+1. Ensure your input data includes sector information (automatically included if using the Bloomberg API extractor)
+2. Run the sector analysis module:
+   ```
+   python docs/sector_analysis.py
+   ```
+
+The analysis will generate detailed sector reports and visualizations in the `output/sector_analysis` directory, providing valuable insights for sector allocation decisions.
+
+### Verifying Bloomberg API Integration
+
+To verify that the Bloomberg API integration is working correctly:
+
+1. Run the Bloomberg data extractor:
+   ```
+   python src/bloomberg_data_extractor.py
+   ```
+
+2. Check that the output files in the `data` directory contain proper sector information:
+   ```
+   head -n 5 data/nifty500_list.csv
+   ```
+   You should see a 'Sector' column containing values like "Information Technology", "Financials", etc.
+
+3. Verify that financial metrics were extracted:
+   ```
+   head -n 5 data/financial_metrics.csv
+   ```
+   You should see columns for PE_Ratio, PB_Ratio, ROE, etc.
+
+4. If any issues are found, check the `bloomberg_extractor.log` file for error messages.
+
+### Complete Workflow with Sector Analysis
+
+The complete workflow incorporating all features is:
+
+1. **Extract data** (monthly or as needed):
+   ```
+   python src/bloomberg_data_extractor.py
+   ```
+   This extracts NIFTY 500 constituents with sectors, historical prices, and financial metrics.
+
+2. **Run the core ranking system**:
+   ```
+   python src/main.py
+   ```
+   This generates the stock rankings based on yearly returns.
+
+3. **Generate ranking visualizations**:
+   ```
+   python docs/visualize_results.py
+   ```
+   This creates visual charts of the ranking results.
+
+4. **Perform sector analysis**:
+   ```
+   python docs/sector_analysis.py
+   ```
+   This analyzes performance by sector and generates sector-based reports.
+
+5. **Review all results for investment decisions**:
+   - Individual stock rankings (`output/NIFTY500_Rankings_*.csv`)
+   - Rank changes month-over-month (`output/NIFTY500_RankDelta_*.csv`)
+   - Visual charts (`output/visualizations/`)
+   - Sector analysis reports (`output/sector_analysis/`)
+   - The consolidated sector analysis report (`output/sector_analysis/sector_analysis_report.txt`)
+
+### Sector-Based Portfolio Construction
+
+To construct a portfolio based on both individual stock performance and sector insights:
+
+1. Identify top-performing sectors from the sector analysis report
+2. Within those sectors, select the highest-ranked stocks from the main ranking system
+3. Consider sector diversification based on the concentration analysis
+4. Use financial metrics to ensure balanced exposure to value and growth characteristics
+
+For advanced usage and customization options, see the [Sector Analysis Guide](docs/README_sector_analysis.md).
+
+### Advanced Usage with Custom Paths

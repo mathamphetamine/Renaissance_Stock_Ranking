@@ -1,12 +1,34 @@
 #!/usr/bin/env python
 """
-Bloomberg Data Extractor
+Bloomberg Data Extractor for Renaissance Stock Ranking System
 
-This script automates the extraction of NIFTY 500 constituent data and
-historical prices using the Bloomberg API.
+This script automates the extraction of NIFTY 500 constituent data, historical prices,
+sector classifications, and financial metrics using the Bloomberg API (BLPAPI).
+
+Key Features:
+- Extracts the current NIFTY 500 constituent list with ISINs, names, and tickers
+- Retrieves GICS sector classifications for all constituents
+- Downloads historical monthly closing prices with corporate action adjustments
+- Collects key financial metrics (P/E ratio, P/B ratio, ROE, etc.)
+- Handles connection issues with automatic retries
+- Provides a test mode for development without Bloomberg access
 
 Usage:
-    python bloomberg_data_extractor.py --output-dir data
+    python bloomberg_data_extractor.py [options]
+
+Options:
+    --output-dir DIR    Directory where output files will be saved (default: data)
+    --start-date DATE   Start date for historical data (YYYY-MM-DD, default: 15 years ago)
+    --end-date DATE     End date for historical data (YYYY-MM-DD, default: today)
+    --test-mode         Run in test mode with sample data (no Bloomberg connection required)
+
+Output Files:
+    - nifty500_list.csv: List of NIFTY 500 constituents with ISIN, Name, Ticker, and Sector
+    - historical_prices.csv: Monthly closing prices for all constituents
+    - financial_metrics.csv: Key financial metrics for analysis and sector comparison
+
+Author: Renaissance Investment Managers
+Version: 1.0.0
 """
 
 import blpapi
@@ -35,8 +57,17 @@ SESSION_OPTIONS.setServerHost('localhost')
 SESSION_OPTIONS.setServerPort(8194)  # Default Bloomberg API port
 
 def parse_arguments():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='Bloomberg Data Extractor')
+    """
+    Parse command line arguments for the Bloomberg data extractor.
+    
+    Returns:
+        argparse.Namespace: Object containing parsed command-line arguments with the following attributes:
+            - output_dir (str): Directory where CSV files will be saved
+            - start_date (str): Start date for historical data in YYYY-MM-DD format
+            - end_date (str): End date for historical data in YYYY-MM-DD format
+            - test_mode (bool): Whether to run in test mode without Bloomberg connection
+    """
+    parser = argparse.ArgumentParser(description='Bloomberg Data Extractor for Renaissance Stock Ranking System')
     
     parser.add_argument('--output-dir', type=str, default='data',
                         help='Directory where CSV files will be saved')
@@ -48,19 +79,35 @@ def parse_arguments():
                         help='End date for historical data (YYYY-MM-DD). Defaults to today.')
     
     parser.add_argument('--test-mode', action='store_true',
-                        help='Run in test mode without actual Bloomberg connection')
+                        help='Run in test mode with sample data (no Bloomberg connection required)')
     
     return parser.parse_args()
 
 def get_nifty500_constituents(test_mode=False):
     """
-    Get the current NIFTY 500 constituents using Bloomberg API.
+    Get the current NIFTY 500 constituents with sector information using Bloomberg API.
+    
+    This function retrieves the complete list of NIFTY 500 constituent stocks along with
+    their ISIN codes, names, tickers, and GICS sector classifications. The sector information
+    is particularly important for sector-based analysis in the Renaissance Stock Ranking System.
+    
+    The function implements connection retry logic and timeout handling to ensure robustness
+    when dealing with Bloomberg API connection issues.
     
     Args:
-        test_mode (bool): If True, returns sample data without calling Bloomberg API
+        test_mode (bool): If True, returns sample test data without calling Bloomberg API.
+                         Useful for development and testing without Bloomberg access.
     
     Returns:
-        pd.DataFrame: DataFrame with ISIN, Name, Ticker, and Sector columns
+        pd.DataFrame: DataFrame with the following columns:
+            - ISIN: International Securities Identification Number (unique identifier)
+            - Name: Company name
+            - Ticker: Bloomberg ticker symbol
+            - Sector: GICS sector classification (e.g., "Financials", "Information Technology")
+    
+    Raises:
+        Exception: If unable to connect to Bloomberg API after maximum retry attempts,
+                 or if the request times out.
     """
     if test_mode:
         logger.info("TEST MODE: Using sample NIFTY 500 data instead of Bloomberg API")
@@ -112,6 +159,7 @@ def get_nifty500_constituents(test_mode=False):
             request.append("fields", "INDX_MWEIGHT_HIST")
             request.append("fields", "GICS_SECTOR_NAME")  # Add GICS sector classification
             
+            # Set the date to today to get current constituents
             overrides = request.getElement("overrides")
             override1 = overrides.appendElement()
             override1.setElement("fieldId", "INDX_MWEIGHT_HIST_END_DT")
@@ -165,7 +213,7 @@ def get_nifty500_constituents(test_mode=False):
             logger.info(f"Retrieved {len(df)} NIFTY 500 constituents")
             
             # If we successfully got data with sectors, return it
-            if "Sector" in df.columns:
+            if "Sector" in df.columns and not all(df["Sector"] == "Unknown"):
                 return df
             
             # If we didn't get sectors, try a separate query to get them
@@ -184,13 +232,24 @@ def get_nifty500_constituents(test_mode=False):
 
 def get_sectors_for_constituents(constituents_df):
     """
-    Get sector information for a list of constituents.
+    Get GICS sector information for a list of constituents if not already available.
+    
+    This function is called as a fallback if sector information wasn't retrieved in
+    the initial query. It sends separate Bloomberg API requests to get sector
+    classifications for each constituent, processing them in batches to avoid
+    overwhelming the API.
+    
+    The GICS (Global Industry Classification Standard) sector classification is
+    particularly valuable for sector-based analysis and is used by the sector
+    analysis module in the Renaissance Stock Ranking System.
     
     Args:
-        constituents_df (pd.DataFrame): DataFrame with constituent information including ISINs and tickers
+        constituents_df (pd.DataFrame): DataFrame with constituent information
+                                      including ISINs and tickers
         
     Returns:
-        pd.DataFrame: The same DataFrame with added Sector column
+        pd.DataFrame: The same DataFrame with an added or updated Sector column
+                    containing GICS sector classifications
     """
     try:
         session = blpapi.Session(SESSION_OPTIONS)

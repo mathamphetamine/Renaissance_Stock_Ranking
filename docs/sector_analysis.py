@@ -10,15 +10,24 @@ The analysis is designed to help portfolio managers understand sector dynamics,
 identify sector trends, and make more informed investment decisions by considering
 both individual stock performance and sector perspectives.
 
-Usage:
-    python docs/sector_analysis.py [--output-dir output/sector_analysis]
-
-Features:
+Key Features:
 - Sector performance analysis: Average returns, risk metrics, and rankings by sector
 - Top stocks by sector: Identification of best performers in each sector
 - Sector concentration analysis: Distribution of stocks and returns across sectors
 - Financial metrics by sector: Valuation and financial health metrics by sector
 - Investment strategy suggestions: Recommendations based on sector analysis
+
+This script can be integrated into the Renaissance Stock Ranking System workflow
+to provide deeper insights for portfolio construction and sector allocation decisions.
+
+Usage:
+    python docs/sector_analysis.py [options]
+
+Options:
+    --output-dir DIR         Directory for analysis outputs (default: output/sector_analysis)
+    --rankings-file FILE     Path to rankings file (default: latest in output/)
+    --nifty500-file FILE     Path to NIFTY 500 list with sectors (default: data/nifty500_list.csv)
+    --metrics-file FILE      Path to financial metrics file (default: latest in output/)
 
 Author: Renaissance Investment Managers
 Date: March 2025
@@ -42,8 +51,15 @@ def parse_arguments():
     """
     Parse command line arguments for the sector analysis script.
     
+    This function defines and processes the command line arguments that control
+    the behavior of the sector analysis, including input/output paths and options.
+    
     Returns:
-        argparse.Namespace: Object containing the parsed command-line arguments
+        argparse.Namespace: Object containing the parsed command-line arguments with:
+            - output_dir: Directory where analysis outputs will be saved
+            - rankings_file: Path to the rankings file (or None to use latest)
+            - nifty500_file: Path to the NIFTY 500 list file (or None to use latest)
+            - metrics_file: Path to the financial metrics file (or None to use latest)
     """
     parser = argparse.ArgumentParser(description='Sector Analysis for Renaissance Stock Ranking System')
     
@@ -69,6 +85,11 @@ def find_latest_file(pattern):
     """
     Find the most recent file matching the specified pattern.
     
+    This function is used to automatically find the latest rankings, NIFTY 500 list,
+    or financial metrics file when specific paths are not provided by the user.
+    It's particularly useful for integrating with the regular workflow where
+    the latest outputs should be analyzed.
+    
     Args:
         pattern (str): Glob pattern to match files, e.g., 'output/NIFTY500_Rankings_*.csv'
     
@@ -85,18 +106,26 @@ def load_data(args):
     """
     Load all required data files for sector analysis.
     
-    This function loads:
+    This function orchestrates the loading of three key data sources:
     1. The rankings data (output from the ranking system)
     2. The NIFTY 500 constituent list with sector information
     3. Optional financial metrics data
     
-    It then merges these datasets to create a comprehensive dataset for analysis.
+    It then merges these datasets to create a comprehensive DataFrame for analysis.
+    The function handles various edge cases, such as missing files or missing columns.
     
     Args:
         args (argparse.Namespace): Command-line arguments containing file paths
     
     Returns:
-        pd.DataFrame: Merged DataFrame containing all data for sector analysis
+        pd.DataFrame: Merged DataFrame containing all data for sector analysis with columns:
+            - ISIN: International Securities Identification Number
+            - Name: Company name
+            - Ticker: Stock ticker symbol
+            - Rank: Current ranking
+            - YearlyReturn: Calculated yearly return (%)
+            - Sector: GICS sector classification
+            - Additional financial metrics if available (PE_Ratio, PB_Ratio, etc.)
     
     Raises:
         FileNotFoundError: If required data files are not found
@@ -152,7 +181,12 @@ def analyze_sector_performance(data, output_dir):
     """
     Analyze performance metrics by sector.
     
-    This function:
+    This function calculates key performance statistics for each sector and ranks
+    them based on average yearly returns. It provides a comprehensive view of
+    which sectors are outperforming or underperforming, along with risk metrics
+    (standard deviation) and ranking information.
+    
+    The function:
     1. Calculates performance statistics for each sector (mean, median, std, etc.)
     2. Ranks sectors by their average yearly returns
     3. Generates visualizations of sector performance
@@ -163,7 +197,14 @@ def analyze_sector_performance(data, output_dir):
         output_dir (str): Directory where output files will be saved
     
     Returns:
-        pd.DataFrame: DataFrame with sector performance statistics
+        pd.DataFrame: DataFrame with sector performance statistics including:
+            - YearlyReturn_mean: Average yearly return for the sector
+            - YearlyReturn_median: Median yearly return
+            - YearlyReturn_std: Standard deviation (risk measure)
+            - YearlyReturn_min/max: Range of returns
+            - YearlyReturn_count: Number of stocks in the sector
+            - Rank_mean, Rank_median, Rank_min: Ranking statistics
+            - Rank_Percentile: Normalized rank (0-100, lower is better)
     """
     print("\nAnalyzing sector performance...")
     
@@ -220,7 +261,12 @@ def analyze_top_stocks_by_sector(data, output_dir):
     """
     Identify and analyze top performing stocks in each sector.
     
-    This function:
+    This function creates a detailed profile of the best-performing stocks within
+    each sector, which is particularly useful for sector-based portfolio construction.
+    It helps investors identify sector champions and understand the characteristics
+    of top performers in different sectors.
+    
+    The function:
     1. Finds the top performing stocks in each sector based on ranking
     2. Creates a detailed text report of the top stocks by sector
     3. Generates a visual comparison of top stocks across sectors
@@ -231,7 +277,9 @@ def analyze_top_stocks_by_sector(data, output_dir):
         output_dir (str): Directory where output files will be saved
     
     Returns:
-        dict: Dictionary mapping sectors to their top stocks
+        dict: Dictionary mapping sectors to their top stocks, containing:
+            - Keys: Sector names (str)
+            - Values: DataFrame of top 10 stocks in that sector
     """
     print("\nIdentifying top stocks by sector...")
     
@@ -330,18 +378,28 @@ def analyze_sector_concentration(data, output_dir):
     """
     Analyze the concentration of stocks and returns across sectors.
     
-    This function:
-    1. Calculates the distribution of stocks across sectors
-    2. Analyzes sector contribution to overall market returns
-    3. Generates visualizations of sector concentration
-    4. Saves results to CSV and image files
+    This function evaluates the distribution of stocks across different sectors
+    and how each sector contributes to the overall market returns. This information
+    is critical for diversification decisions and understanding market structure.
+    
+    The analysis helps portfolio managers:
+    - Identify overrepresented or underrepresented sectors
+    - Understand return contribution relative to sector size
+    - Make informed sector allocation decisions
     
     Args:
         data (pd.DataFrame): Merged data containing rankings and sector information
         output_dir (str): Directory where output files will be saved
     
     Returns:
-        pd.DataFrame: DataFrame with sector concentration metrics
+        pd.DataFrame: DataFrame with sector concentration metrics including:
+            - Count: Number of stocks in each sector
+            - Percentage: Percentage of total stocks by sector
+            - ReturnContribution: Percentage contribution to total returns
+    
+    Note:
+        If negative returns are present, absolute values are used for
+        the return contribution pie chart (which cannot display negative values).
     """
     print("\nAnalyzing sector concentration...")
     
@@ -399,7 +457,12 @@ def analyze_sector_metrics(data, output_dir):
     """
     Analyze financial metrics by sector.
     
-    This function:
+    This function calculates average financial metrics (P/E, P/B, ROE, etc.) for
+    each sector, providing insights into relative valuations and financial health
+    across sectors. This is particularly valuable for identifying value opportunities
+    or determining whether a sector's performance is justified by fundamentals.
+    
+    The function:
     1. Calculates average financial metrics for each sector
     2. Creates visualizations of key metrics by sector
     3. Saves results to CSV and image files
@@ -409,7 +472,12 @@ def analyze_sector_metrics(data, output_dir):
         output_dir (str): Directory where output files will be saved
     
     Returns:
-        pd.DataFrame or None: DataFrame with sector financial metrics, or None if metrics are unavailable
+        pd.DataFrame or None: DataFrame with sector financial metrics (average values),
+                             or None if metrics are unavailable
+    
+    Note:
+        This analysis is skipped if financial metrics are not available in the data.
+        These metrics are typically provided by the Bloomberg API extractor.
     """
     print("\nAnalyzing financial metrics by sector...")
     
@@ -453,12 +521,19 @@ def analyze_sector_metrics(data, output_dir):
 
 def generate_sector_report(sector_stats, concentration, metrics_by_sector, output_dir):
     """
-    Generate a comprehensive sector analysis report.
+    Generate a comprehensive sector analysis report with investment implications.
     
-    This function:
-    1. Compiles insights from various sector analyses
-    2. Identifies investment implications based on the analysis
-    3. Creates a well-structured text report with recommendations
+    This function synthesizes the results of the various sector analyses into a single,
+    comprehensive report with actionable investment insights. The report is designed
+    to provide portfolio managers with clear, actionable information to inform
+    sector allocation decisions and stock selection within sectors.
+    
+    The report includes:
+    1. Sector performance summary
+    2. Concentration analysis
+    3. Financial metrics comparison
+    4. Investment strategy suggestions
+    5. Conclusions and recommendations
     
     Args:
         sector_stats (pd.DataFrame): Sector performance statistics
@@ -570,6 +645,11 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
 def main():
     """
     Main function to orchestrate the sector analysis workflow.
+    
+    This function coordinates the entire sector analysis process from start to finish,
+    handling command-line arguments, data loading, performing various analyses, and
+    generating the final report. It implements a proper error handling strategy and
+    provides informative progress updates throughout the process.
     
     Workflow:
     1. Parse command-line arguments
