@@ -67,12 +67,12 @@ def create_visualizations():
 
     # 1. Distribution of yearly returns
     plt.figure(figsize=(12, 6))
-    sns.histplot(rankings['Yearly_Return'], kde=True)
+    sns.histplot(rankings['YearlyReturn'], kde=True)
     plt.title('Distribution of Yearly Returns')
     plt.xlabel('Yearly Return (%)')
     plt.ylabel('Number of Stocks')
-    plt.axvline(rankings['Yearly_Return'].mean(), color='r', linestyle='--', 
-                label=f"Mean: {rankings['Yearly_Return'].mean():.2f}%")
+    plt.axvline(rankings['YearlyReturn'].mean(), color='r', linestyle='--', 
+                label=f"Mean: {rankings['YearlyReturn'].mean():.2f}%")
     plt.axvline(0, color='black', linestyle='-', label="Zero Return")
     plt.legend()
     plt.tight_layout()
@@ -80,9 +80,9 @@ def create_visualizations():
     print(f"Created return distribution chart")
 
     # 2. Top performers
-    top10 = rankings.sort_values('Yearly_Return', ascending=False).head(10)
+    top10 = rankings.sort_values('YearlyReturn', ascending=False).head(10)
     plt.figure(figsize=(12, 8))
-    sns.barplot(x='Yearly_Return', y='Name', data=top10)
+    sns.barplot(x='YearlyReturn', y='Name', data=top10)
     plt.title('Top 10 Performers by Yearly Return')
     plt.xlabel('Yearly Return (%)')
     plt.ylabel('Company')
@@ -91,15 +91,15 @@ def create_visualizations():
     print(f"Created top performers chart")
 
     # 3. Rank changes (if rank delta data is available)
-    if 'Rank_Delta' in rank_delta.columns:
+    if 'RankDelta' in rank_delta.columns:
         # Distribution of rank changes
         plt.figure(figsize=(12, 6))
-        sns.histplot(rank_delta['Rank_Delta'], kde=True)
+        sns.histplot(rank_delta['RankDelta'], kde=True)
         plt.title('Distribution of Rank Changes')
         plt.xlabel('Rank Delta (negative values indicate improvement)')
         plt.ylabel('Number of Stocks')
-        plt.axvline(rank_delta['Rank_Delta'].mean(), color='r', linestyle='--', 
-                    label=f"Mean: {rank_delta['Rank_Delta'].mean():.2f}")
+        plt.axvline(rank_delta['RankDelta'].mean(), color='r', linestyle='--', 
+                    label=f"Mean: {rank_delta['RankDelta'].mean():.2f}")
         plt.axvline(0, color='black', linestyle='-', label="No Change")
         plt.legend()
         plt.tight_layout()
@@ -107,9 +107,9 @@ def create_visualizations():
         print(f"Created rank delta distribution chart")
 
         # Top improvers (biggest negative rank delta)
-        top_improvers = rank_delta.sort_values('Rank_Delta').head(10)
+        top_improvers = rank_delta.sort_values('RankDelta').head(10)
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Rank_Delta', y='Name', data=top_improvers)
+        sns.barplot(x='RankDelta', y='Name', data=top_improvers)
         plt.title('Top 10 Rank Improvers (Positive Momentum)')
         plt.xlabel('Rank Delta (negative indicates improvement)')
         plt.ylabel('Company')
@@ -118,12 +118,12 @@ def create_visualizations():
         print(f"Created top improvers chart")
 
     # 4. Save summary data as CSV
-    top_performers = rankings.sort_values('Yearly_Return', ascending=False).head(20)
+    top_performers = rankings.sort_values('YearlyReturn', ascending=False).head(20)
     top_performers.to_csv(os.path.join(viz_dir, f'top_performers_{timestamp}.csv'), index=False)
     print(f"Saved top performers data to CSV")
 
-    if 'Rank_Delta' in rank_delta.columns:
-        top_improvers = rank_delta.sort_values('Rank_Delta').head(20)
+    if 'RankDelta' in rank_delta.columns:
+        top_improvers = rank_delta.sort_values('RankDelta').head(20)
         top_improvers.to_csv(os.path.join(viz_dir, f'top_improvers_{timestamp}.csv'), index=False)
         print(f"Saved top improvers data to CSV")
     

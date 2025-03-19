@@ -62,13 +62,19 @@ This Python-based system addresses these issues by:
 - Generating clear, structured outputs for easy interpretation
 
 ## Key Features
-- Monthly rolling 1-year return calculation for all NIFTY 500 stocks
-- Monthly stock ranking based on performance
-- Month-over-month rank change tracking (rank delta)
-- Statistical analysis of returns and rankings
-- Automated output generation in CSV format
-- Visualization tool for easy data interpretation (no Python knowledge required)
-- Robust error handling and validation
+- Automated calculation of yearly returns on a monthly rolling basis for NIFTY 500 stocks
+- Ranking of stocks based on these returns
+- Tracking of month-over-month rank changes
+- Generation of output files for analysis
+- Visualization tool for easy data interpretation without requiring Python knowledge
+- Bloomberg API integration for automated data extraction (new!)
+- **Historical Data Analysis**: Analyzes historical monthly price data to calculate yearly returns.
+- **Performance Ranking**: Ranks stocks from best to worst based on calculated yearly returns.
+- **Rank Change Tracking**: Tracks month-to-month rank changes to identify improving or declining stocks.
+- **Data Visualization**: Automatically generates insightful charts and graphs from ranked data without requiring Python knowledge.
+- **Sector Analysis**: Analyzes stock performance by sector, identifying top-performing sectors and sector concentration metrics.
+- **Comprehensive Output**: Produces detailed CSV files with ranking results and performance metrics.
+- **Flexible Configuration**: Easily customizable through configuration parameters.
 
 ## Project Structure
 ```
@@ -185,11 +191,38 @@ Run a specific test:
 python -m unittest tests.test_ranking_system
 ```
 
-## Input Data Requirements
-- **NIFTY 500 List:** CSV file with ISIN, Name, and Bloomberg Ticker
-- **Historical Prices:** CSV file with ISIN, Date, and Closing Price
+### Sector-Based Analysis
 
-For format details, see [Data Extraction Guide](docs/data_extraction_guide.md).
+To perform a detailed sector-based analysis of the ranking results:
+
+1. Ensure your `nifty500_list.csv` file includes a 'Sector' column (automatically added if using the Bloomberg API extractor).
+2. Run the sector analysis script:
+   ```
+   python docs/sector_analysis.py
+   ```
+
+This will generate comprehensive sector reports and visualizations in the `output/sector_analysis` directory, including:
+- Sector performance statistics
+- Top stocks by sector
+- Sector concentration analysis
+- Financial metrics by sector
+- Investment strategy recommendations
+
+For customization options, run:
+```
+python docs/sector_analysis.py --help
+```
+
+## Input Data Requirements
+
+The system processes two primary data files:
+
+1. **NIFTY 500 constituent list** (`nifty500_list.csv`): A list of all stocks in the NIFTY 500 index, with their ISINs as the primary identifier.
+2. **Historical monthly closing prices** (`historical_prices.csv`): Month-end closing prices for all NIFTY 500 stocks.
+
+These files can be created either:
+- Manually by extracting data from the Bloomberg Terminal as described in the [Data Extraction Guide](docs/data_extraction_guide.md)
+- Automatically using the Bloomberg API integration (see the [Bloomberg API Guide](docs/bloomberg_api_guide.md))
 
 ## Output Files
 - **Latest Rankings (`NIFTY500_Rankings_YYYYMMDD.csv`)**: Current month rankings

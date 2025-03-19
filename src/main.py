@@ -65,6 +65,93 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def validate_input_data(nifty500_file: str, price_file: str) -> bool:
+    """
+    Validate input data files before processing.
+    
+    Args:
+        nifty500_file (str): Path to NIFTY 500 list CSV file
+        price_file (str): Path to historical prices CSV file
+        
+    Returns:
+        bool: True if data is valid, False otherwise
+        
+    Raises:
+        ValueError: If data validation fails
+    """
+    logger.info("Validating input data files")
+    
+    # Check files exist
+    if not os.path.exists(nifty500_file):
+        raise FileNotFoundError(f"NIFTY 500 list file not found: {nifty500_file}")
+    
+    if not os.path.exists(price_file):
+        raise FileNotFoundError(f"Historical price file not found: {price_file}")
+    
+    # Check file formats
+    try:
+        nifty500_df = pd.read_csv(nifty500_file)
+        if "ISIN" not in nifty500_df.columns:
+            raise ValueError(f"NIFTY 500 list file missing required 'ISIN' column: {nifty500_file}")
+        
+        # Check ISIN format (basic check)
+        invalid_isins = [isin for isin in nifty500_df["ISIN"] if not isinstance(isin, str) or len(isin) != 12]
+        if invalid_isins:
+            logger.warning(f"Found {len(invalid_isins)} potentially invalid ISINs in NIFTY 500 list")
+            
+        logger.info(f"NIFTY 500 list file contains {len(nifty500_df)} stocks")
+        
+        # Check price file
+        prices_df = pd.read_csv(price_file)
+        required_columns = ["ISIN", "Date", "Price"]
+        missing_columns = [col for col in required_columns if col not in prices_df.columns]
+        
+        if missing_columns:
+            raise ValueError(f"Historical price file missing required columns: {missing_columns}")
+        
+        # Try to convert dates
+        try:
+            prices_df["Date"] = pd.to_datetime(prices_df["Date"])
+        except Exception as e:
+            raise ValueError(f"Error converting dates in historical price file: {str(e)}")
+        
+        # Check prices are numeric
+        try:
+            prices_df["Price"] = pd.to_numeric(prices_df["Price"])
+        except Exception as e:
+            raise ValueError(f"Error converting prices to numeric in historical price file: {str(e)}")
+        
+        # Check price coverage
+        covered_isins = set(prices_df["ISIN"].unique())
+        all_isins = set(nifty500_df["ISIN"])
+        missing_isins = all_isins - covered_isins
+        
+        if missing_isins:
+            logger.warning(f"Missing price data for {len(missing_isins)} ISINs from NIFTY 500 list")
+            logger.debug(f"Examples of missing ISINs: {list(missing_isins)[:5]}")
+            
+            # If more than 20% of ISINs are missing, this might be a problem
+            if len(missing_isins) > len(all_isins) * 0.2:
+                logger.warning(f"More than 20% of ISINs are missing price data. This may affect analysis quality.")
+        
+        # Check date range
+        date_range = (prices_df["Date"].min(), prices_df["Date"].max())
+        months_covered = len(prices_df["Date"].dt.to_period("M").unique())
+        
+        logger.info(f"Historical price data covers {months_covered} months from {date_range[0]} to {date_range[1]}")
+        
+        # For proper analysis, we should have at least 12 months of data
+        if months_covered < 12:
+            logger.warning(f"Less than 12 months of price data available. This may affect yearly return calculations.")
+            
+        logger.info("Input data validation completed successfully")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error validating input data: {str(e)}")
+        raise ValueError(f"Input data validation failed: {str(e)}")
+
+
 def main():
     """Main function to orchestrate the entire stock ranking process."""
     try:
@@ -76,79 +163,90 @@ def main():
         logger.info(f"Historical prices file: {args.price_file}")
         logger.info(f"Output directory: {args.output_dir}")
         
-        # Ensure files exist
-        for file_path in [args.nifty500_file, args.price_file]:
-            if not os.path.exists(file_path):
-                logger.error(f"File not found: {file_path}")
-                logger.info("Please ensure that you have extracted the necessary data from Bloomberg Terminal")
-                logger.info("and placed the files in the correct location.")
-                return
+        # Validate input data
+        try:
+            validate_input_data(args.nifty500_file, args.price_file)
+        except Exception as e:
+            logger.error(f"Input data validation failed: {str(e)}")
+            logger.info("Please check your input files and try again.")
+            return 1
         
         # 1. Load data
         logger.info("Step 1: Loading data")
-        nifty500_df, monthly_prices_df = load_and_prepare_all_data(
-            args.nifty500_file, args.price_file
-        )
+        try:
+            nifty500_df, monthly_prices_df = load_and_prepare_all_data(
+                args.nifty500_file, args.price_file
+            )
+        except Exception as e:
+            logger.error(f"Error loading data: {str(e)}")
+            return 1
         
         # 2. Calculate yearly returns
         logger.info("Step 2: Calculating yearly returns")
-        returns_df = calculate_yearly_returns(monthly_prices_df)
-        
-        # Validate the calculated returns
-        returns_df = validate_returns(returns_df)
+        try:
+            returns_df = calculate_yearly_returns(monthly_prices_df)
+            returns_df = validate_returns(returns_df)
+        except Exception as e:
+            logger.error(f"Error calculating returns: {str(e)}")
+            return 1
         
         # 3. Rank stocks
         logger.info("Step 3: Ranking stocks")
-        ranked_df = rank_stocks_by_return(returns_df)
-        
-        # Analyze the rankings
-        analyze_rankings(ranked_df)
-        
-        # Get the latest month's rankings
-        latest_rankings, latest_date = get_latest_rankings(ranked_df)
+        try:
+            ranked_df = rank_stocks_by_return(returns_df)
+            analyze_rankings(ranked_df)
+            latest_rankings, latest_date = get_latest_rankings(ranked_df)
+        except Exception as e:
+            logger.error(f"Error ranking stocks: {str(e)}")
+            return 1
         
         # 4. Calculate rank delta
         logger.info("Step 4: Calculating rank delta")
-        delta_df = calculate_rank_delta(ranked_df)
-        
-        # Analyze the rank delta
-        analyze_rank_delta(delta_df)
-        
-        # Get the latest month's rank delta
-        latest_delta, _ = get_latest_rank_delta(delta_df)
+        try:
+            delta_df = calculate_rank_delta(ranked_df)
+            analyze_rank_delta(delta_df)
+            latest_delta, _ = get_latest_rank_delta(delta_df)
+        except Exception as e:
+            logger.error(f"Error calculating rank delta: {str(e)}")
+            return 1
         
         # 5. Generate output files
         logger.info("Step 5: Generating output files")
-        
-        # Create the output directory if it doesn't exist
-        os.makedirs(args.output_dir, exist_ok=True)
-        
-        # Generate output files
-        generate_latest_rankings_output(
-            latest_rankings, latest_date, nifty500_df, args.output_dir
-        )
-        
-        generate_rank_delta_output(
-            latest_delta, latest_date, nifty500_df, args.output_dir
-        )
-        
-        # Generate historical rankings output if requested
-        if args.generate_historical:
-            generate_historical_rankings_output(
-                ranked_df, nifty500_df, args.output_dir
+        try:
+            # Create the output directory if it doesn't exist
+            os.makedirs(args.output_dir, exist_ok=True)
+            
+            # Generate output files
+            generate_latest_rankings_output(
+                latest_rankings, latest_date, nifty500_df, args.output_dir
             )
-        
-        # Generate summary statistics
-        generate_summary_statistics(
-            ranked_df, delta_df, nifty500_df, args.output_dir
-        )
+            
+            generate_rank_delta_output(
+                latest_delta, latest_date, nifty500_df, args.output_dir
+            )
+            
+            # Generate historical rankings output if requested
+            if args.generate_historical:
+                generate_historical_rankings_output(
+                    ranked_df, nifty500_df, args.output_dir
+                )
+            
+            # Generate summary statistics
+            generate_summary_statistics(
+                ranked_df, delta_df, nifty500_df, args.output_dir
+            )
+        except Exception as e:
+            logger.error(f"Error generating output files: {str(e)}")
+            return 1
         
         logger.info("NIFTY 500 Stock Ranking System completed successfully")
         logger.info(f"Output files have been saved to {args.output_dir}")
+        return 0
         
     except Exception as e:
         logger.error(f"Error in main function: {str(e)}", exc_info=True)
-        
+        return 1
+
 
 if __name__ == "__main__":
     main()
