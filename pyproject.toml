@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "renaissance-stock-ranking"
+version = "1.0.0"
+description = "Automated Stock Ranking System for Renaissance Investment Managers"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Renaissance Investment Managers"}
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+]
+
+[project.scripts]
+renaissance-rank = "renaissance.cli.main:main"
+renaissance-analyze = "renaissance.cli.analyze:main"
+renaissance-visualize = "renaissance.cli.visualize:main"
+renaissance-extract = "renaissance.cli.extract:main" 

@@ -21,7 +21,7 @@ This script can be integrated into the Renaissance Stock Ranking System workflow
 to provide deeper insights for portfolio construction and sector allocation decisions.
 
 Usage:
-    python docs/sector_analysis.py [options]
+    python -m renaissance.cli.analyze [options]
 
 Options:
     --output-dir DIR         Directory for analysis outputs (default: output/sector_analysis)

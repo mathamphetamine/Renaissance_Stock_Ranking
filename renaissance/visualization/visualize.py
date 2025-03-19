@@ -15,10 +15,10 @@ What this tool does:
 5. Saves all charts as image files you can easily view and share
 
 How to use it:
-1. Make sure you've run the main system first (python src/main.py)
+1. Make sure you've run the main system first (python -m renaissance.cli.main)
 2. Open a terminal/command prompt
 3. Navigate to the Renaissance_Stock_Ranking directory
-4. Type: python docs/visualize_results.py
+4. Type: python -m renaissance.cli.visualize
 5. Look in the 'output/visualizations' folder for the results
 
 No coding knowledge required! Just run it and view the images.
@@ -145,7 +145,7 @@ def create_visualizations():
     rank_delta_file = get_latest_file('output/NIFTY500_RankDelta_*.csv')
 
     if not rankings_file or not rank_delta_file:
-        print("Error: Output files not found. Please run the main system first (python src/main.py).")
+        print("Error: Output files not found. Please run the main system first (python -m renaissance.cli.main).")
         return
 
     print(f"Using rankings file: {rankings_file}")

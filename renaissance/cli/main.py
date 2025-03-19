@@ -9,7 +9,7 @@ This is the main script that orchestrates the entire stock ranking process:
 5. Generate output files with results
 
 Usage:
-    python main.py
+    python -m renaissance.cli.main
 """
 
 import os
@@ -19,15 +19,12 @@ import argparse
 import logging
 from pathlib import Path
 
-# Add the parent directory to sys.path to import modules
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 # Import other modules
-from src.data_loader import load_and_prepare_all_data
-from src.return_calculator import calculate_yearly_returns, validate_returns
-from src.ranking_system import rank_stocks_by_return, analyze_rankings, get_latest_rankings
-from src.rank_delta_calculator import calculate_rank_delta, get_latest_rank_delta, analyze_rank_delta
-from src.output_generator import (
+from renaissance.core.data_loader import load_and_prepare_all_data
+from renaissance.core.return_calculator import calculate_yearly_returns, validate_returns
+from renaissance.core.ranking_system import rank_stocks_by_return, analyze_rankings, get_latest_rankings
+from renaissance.core.rank_delta_calculator import calculate_rank_delta, get_latest_rank_delta, analyze_rank_delta
+from renaissance.core.output_generator import (
     generate_latest_rankings_output,
     generate_rank_delta_output,
     generate_historical_rankings_output,
@@ -50,13 +47,13 @@ def parse_arguments():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(description='NIFTY 500 Stock Ranking System')
     
-    parser.add_argument('--nifty500-file', type=str, default='../data/nifty500_list.csv',
+    parser.add_argument('--nifty500-file', type=str, default='data/nifty500_list.csv',
                         help='Path to the CSV file containing NIFTY 500 constituent data with ISINs')
     
-    parser.add_argument('--price-file', type=str, default='../data/historical_prices.csv',
+    parser.add_argument('--price-file', type=str, default='data/historical_prices.csv',
                         help='Path to the CSV file containing historical monthly closing prices')
     
-    parser.add_argument('--output-dir', type=str, default='../output',
+    parser.add_argument('--output-dir', type=str, default='output',
                         help='Directory where output files will be saved')
     
     parser.add_argument('--generate-historical', action='store_true',

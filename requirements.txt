@@ -31,3 +31,8 @@ requests==2.31.0
 
 # Comment/uncomment the following package based on whether you're using the GUI tools
 # PyQt5==5.15.9  # For GUI tools
+
+# Development tools
+wheel>=0.38.0
+setuptools>=65.5.1
+build>=0.10.0
