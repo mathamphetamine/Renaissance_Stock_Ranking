@@ -45,6 +45,8 @@ The Renaissance Stock Ranking System automates the analysis of NIFTY 500 stocks,
 - ✓ **Accuracy**: Consistent, error-free calculations
 - 📊 **Rich Analysis**: Advanced metrics and sector-level insights
 - 🛠️ **Adjustments Handled**: Uses Bloomberg's pre-adjusted data
+- 🔄 **Bloomberg Integration**: Direct API access for streamlined data extraction
+- 📈 **Financial Metrics**: Automated collection of key valuation and performance metrics
 
 ## Complete Workflow
 
@@ -102,8 +104,10 @@ The Renaissance Stock Ranking System automates the analysis of NIFTY 500 stocks,
 - **Financial Metrics Integration**: Incorporates key financial metrics (P/E, P/B, ROE, etc.) for deeper analysis
 - **Comprehensive Output**: Produces detailed CSV files with ranking results and performance metrics
 - **Flexible Configuration**: Easily customizable through command-line parameters
-- **Bloomberg API Integration**: Optional automated data extraction including sector information and financial metrics
+- **Bloomberg API Integration**: Automated data extraction including sector information and financial metrics
 - **Modern Package Structure**: Organized as a proper Python package for easy installation and use
+- **Convenient Scripts**: Simple script interfaces for users without Python expertise
+- **Test Mode**: Development and testing without requiring Bloomberg access
 
 ## Complete Workflow Guide
 
@@ -196,6 +200,14 @@ You have three options for data collection:
 # Extract all necessary data using the Bloomberg API
 python scripts/extract_bloomberg.py
 ```
+
+This option:
+- Automatically extracts NIFTY 500 constituents with sector information
+- Retrieves historical monthly prices with corporate action adjustments
+- Collects key financial metrics for deeper analysis
+- Saves all data in the required format
+
+For detailed instructions on setting up and using the Bloomberg API, see the [Bloomberg API Guide](docs/bloomberg_api_guide.md).
 
 #### Option B: Manual Extraction (Requires Bloomberg Terminal)
 Follow the detailed steps in [Data Extraction Guide](docs/data_extraction_guide.md) to:
@@ -473,11 +485,12 @@ Renaissance_Stock_Ranking/
 The system is designed to be flexible and can be used in multiple ways:
 
 ### 1. For Investment Analysts: Easy Scripts
-Simple scripts that can be run with minimal technical knowledge:
+Simple scripts in the `scripts/` directory can be run with minimal technical knowledge:
 ```bash
 python scripts/run_ranking.py
 python scripts/visualize_results.py
 python scripts/analyze_sectors.py
+python scripts/extract_bloomberg.py  # If you have Bloomberg access
 ```
 
 ### 2. For Technical Users: Command-Line Tools
@@ -608,15 +621,107 @@ head -n 5 data/historical_prices.csv
 
 - **Detailed User Guide**: See [User Guide](docs/user_guide.md)
 - **Bloomberg Data Extraction**: See [Data Extraction Guide](docs/data_extraction_guide.md)
-- **Bloomberg API Integration**: See [Bloomberg API Guide](docs/bloomberg_api_guide.md)
+- **Bloomberg API Integration**: See [Bloomberg API Guide](docs/bloomberg_api_guide.md) for automated data collection
 - **Sector Analysis**: See [Sector Analysis Guide](docs/README_sector_analysis.md)
 - **Code Examples**: See [Example Notebook](examples/example_usage.ipynb)
 
-## Version History
-- **v1.0.0** (Mar 2023): Initial release with core ranking functionality
-- **v1.1.0** (Jun 2023): Added visualization capabilities
-- **v1.2.0** (Sep 2023): Added sector analysis
-- **v2.0.0** (Mar 2024): Restructured as proper Python package with Bloomberg API integration
+## Glossary of Terms
+
+Here's a quick reference for technical terms used in this documentation:
+
+- **CSV**: Comma-Separated Values file - a simple text format that stores tabular data with commas between values
+- **ISIN**: International Securities Identification Number - a 12-character alphanumeric code that uniquely identifies a specific security
+- **Terminal Command/Command Line**: A text-based interface to control your computer by typing commands
+- **Virtual Environment**: An isolated Python environment that allows packages to be installed for use by a particular project only
+- **Repository**: A storage location for software packages, typically used with version control systems like Git
+- **Dependencies**: External software packages that your project relies on to function
+- **Script**: A file containing Python code that can be executed
+- **Module**: A Python file containing definitions and statements that can be imported and used in other Python files
+
+## Simplified Installation Guide
+
+For users less familiar with Python and command-line tools:
+
+### Windows Installation
+1. **Install Python**:
+   - Download Python 3.8 or higher from [python.org](https://www.python.org/downloads/)
+   - During installation, check "Add Python to PATH"
+   - Click "Install Now"
+
+2. **Get the Stock Ranking System**:
+   - Download the ZIP file of this project from GitHub
+   - Extract the ZIP file to a folder on your computer
+
+3. **Open Command Prompt**:
+   - Press Windows+R, type "cmd" and press Enter
+   - Navigate to the project folder:
+     ```
+     cd path\to\Renaissance_Stock_Ranking
+     ```
+
+4. **Set Up the System**:
+   - Create a virtual environment (one-time setup):
+     ```
+     python -m venv venv
+     venv\Scripts\activate
+     pip install -r requirements.txt
+     ```
+
+5. **Use the System**:
+   - Place your data files in the "data" folder
+   - Run the system using the scripts in the "scripts" folder
+
+### Mac/Linux Installation
+1. **Install Python** (if not already installed):
+   - Mac: Install Homebrew, then run `brew install python3`
+   - Linux: Use package manager, e.g., `sudo apt install python3`
+
+2. **Get the Stock Ranking System**:
+   - Download the ZIP file from GitHub
+   - Extract to your preferred location
+
+3. **Open Terminal**:
+   - Navigate to the project folder:
+     ```
+     cd path/to/Renaissance_Stock_Ranking
+     ```
+
+4. **Set Up the System**:
+   - Create a virtual environment (one-time setup):
+     ```
+     python3 -m venv venv
+     source venv/bin/activate
+     pip install -r requirements.txt
+     ```
+
+5. **Use the System**:
+   - Place your data files in the "data" folder
+   - Run the system using the scripts in the "scripts" folder
+
+## GitHub Deployment Instructions
+
+If you need to deploy this project to your own GitHub repository:
+
+1. Create a new repository on GitHub
+2. Initialize the local repository (if not already done):
+   ```bash
+   git init
+   git add .
+   git commit -m "Initial commit"
+   ```
+3. Add your GitHub repository as remote and push:
+   ```bash
+   git remote add origin https://github.com/your-username/Renaissance_Stock_Ranking.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+## Input Data Requirements
+- **NIFTY 500 List:** CSV file with ISIN, Name, Ticker, and Sector (optional)
+- **Historical Prices:** CSV file with ISIN, Date, and Price (adjusted for corporate actions)
+- **Financial Metrics (Optional):** CSV file with ISIN and metrics (PE_Ratio, PB_Ratio, ROE, etc.)
+
+The system is designed to work seamlessly with data extracted from Bloomberg, but any data source that provides the required format can be used. For detailed format specifications, see the [Data Extraction Guide](docs/data_extraction_guide.md).
 
 ## Author
 Renaissance Investment Managers
