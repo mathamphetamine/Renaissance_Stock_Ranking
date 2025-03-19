@@ -6,15 +6,23 @@ This script performs sector-based analysis on the ranking outputs from the
 Renaissance Stock Ranking System. It provides insights by sector, including
 sector performance, contribution to overall returns, and sector-wise rankings.
 
+The analysis is designed to help portfolio managers understand sector dynamics,
+identify sector trends, and make more informed investment decisions by considering
+both individual stock performance and sector perspectives.
+
 Usage:
     python docs/sector_analysis.py [--output-dir output/sector_analysis]
 
 Features:
-- Sector performance analysis
-- Top stocks by sector
-- Sector concentration analysis
-- Sector momentum tracking
-- Visualization of sector trends
+- Sector performance analysis: Average returns, risk metrics, and rankings by sector
+- Top stocks by sector: Identification of best performers in each sector
+- Sector concentration analysis: Distribution of stocks and returns across sectors
+- Financial metrics by sector: Valuation and financial health metrics by sector
+- Investment strategy suggestions: Recommendations based on sector analysis
+
+Author: Renaissance Investment Managers
+Date: March 2025
+Version: 1.0.0
 """
 
 import os
@@ -27,60 +35,99 @@ import seaborn as sns
 from datetime import datetime
 import glob
 
-# Add the project root to the Python path
+# Add the project root to the Python path to enable imports from the src directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def parse_arguments():
-    """Parse command line arguments."""
+    """
+    Parse command line arguments for the sector analysis script.
+    
+    Returns:
+        argparse.Namespace: Object containing the parsed command-line arguments
+    """
     parser = argparse.ArgumentParser(description='Sector Analysis for Renaissance Stock Ranking System')
     
+    # Define the output directory where analysis results will be saved
     parser.add_argument('--output-dir', type=str, default='output/sector_analysis',
                         help='Directory where analysis outputs will be saved')
     
+    # Optional path to the rankings file (if not provided, the latest one will be used)
     parser.add_argument('--rankings-file', type=str, default=None,
                         help='Path to the rankings file. If not provided, the latest one will be used.')
     
+    # Optional path to the NIFTY 500 list file (if not provided, the latest one will be used)
     parser.add_argument('--nifty500-file', type=str, default=None,
                         help='Path to the NIFTY 500 list file with sector information. If not provided, the latest one will be used.')
     
+    # Optional path to the financial metrics file (if not provided, the latest one will be used)
     parser.add_argument('--metrics-file', type=str, default=None,
                         help='Path to the financial metrics file. If not provided, the latest one will be used.')
     
     return parser.parse_args()
 
 def find_latest_file(pattern):
-    """Find the most recent file matching a pattern."""
+    """
+    Find the most recent file matching the specified pattern.
+    
+    Args:
+        pattern (str): Glob pattern to match files, e.g., 'output/NIFTY500_Rankings_*.csv'
+    
+    Returns:
+        str or None: Path to the most recent file matching the pattern, or None if no files found
+    """
     files = glob.glob(pattern)
     if not files:
         return None
+    # Sort files by creation time and return the most recent one
     return max(files, key=os.path.getctime)
 
 def load_data(args):
-    """Load all required data files."""
-    # Find the latest files if not specified
+    """
+    Load all required data files for sector analysis.
+    
+    This function loads:
+    1. The rankings data (output from the ranking system)
+    2. The NIFTY 500 constituent list with sector information
+    3. Optional financial metrics data
+    
+    It then merges these datasets to create a comprehensive dataset for analysis.
+    
+    Args:
+        args (argparse.Namespace): Command-line arguments containing file paths
+    
+    Returns:
+        pd.DataFrame: Merged DataFrame containing all data for sector analysis
+    
+    Raises:
+        FileNotFoundError: If required data files are not found
+    """
+    # Find the latest files if specific files are not provided
     rankings_file = args.rankings_file or find_latest_file('output/NIFTY500_Rankings_*.csv')
     nifty500_file = args.nifty500_file or find_latest_file('data/nifty500_list.csv')
     metrics_file = args.metrics_file or find_latest_file('output/financial_metrics.csv')
     
+    # Ensure required files exist
     if not rankings_file:
         raise FileNotFoundError("No rankings file found. Please run the main system first.")
     
     if not nifty500_file:
         raise FileNotFoundError("No NIFTY 500 list file found. Please extract data first.")
     
-    # Load data files
+    # Load the rankings data
     print(f"Loading rankings from: {rankings_file}")
     rankings = pd.read_csv(rankings_file)
     
+    # Load the NIFTY 500 list with sector information
     print(f"Loading NIFTY 500 list from: {nifty500_file}")
     nifty500 = pd.read_csv(nifty500_file)
     
     # Check if sector information is available
     if 'Sector' not in nifty500.columns:
         print("Warning: Sector information not found in NIFTY 500 list. Analysis will be limited.")
+        # Create a default sector column if missing
         nifty500['Sector'] = 'Unknown'
     
-    # Load financial metrics if available
+    # Load financial metrics if available (optional)
     metrics = None
     if metrics_file and os.path.exists(metrics_file):
         print(f"Loading financial metrics from: {metrics_file}")
@@ -89,84 +136,136 @@ def load_data(args):
         print("Financial metrics file not found. Some analyses will be skipped.")
     
     # Merge rankings with sector information
+    # Left join ensures we keep all ranked stocks even if they don't have sector info
     data = pd.merge(rankings, nifty500[['ISIN', 'Sector']], on='ISIN', how='left')
     
     # Add metrics if available
     if metrics is not None:
         data = pd.merge(data, metrics, on='ISIN', how='left')
     
-    # Fill any missing sectors
+    # Fill any missing sectors with 'Unknown'
     data['Sector'] = data['Sector'].fillna('Unknown')
     
     return data
 
 def analyze_sector_performance(data, output_dir):
-    """Analyze performance by sector."""
+    """
+    Analyze performance metrics by sector.
+    
+    This function:
+    1. Calculates performance statistics for each sector (mean, median, std, etc.)
+    2. Ranks sectors by their average yearly returns
+    3. Generates visualizations of sector performance
+    4. Saves results to CSV and image files
+    
+    Args:
+        data (pd.DataFrame): Merged data containing rankings and sector information
+        output_dir (str): Directory where output files will be saved
+    
+    Returns:
+        pd.DataFrame: DataFrame with sector performance statistics
+    """
     print("\nAnalyzing sector performance...")
     
-    # Group by sector and calculate statistics
+    # Group by sector and calculate various statistics
     sector_stats = data.groupby('Sector').agg({
         'YearlyReturn': ['mean', 'median', 'std', 'min', 'max', 'count'],
         'Rank': ['mean', 'median', 'min']
     })
     
-    # Rename and sort columns for clarity
+    # Rename columns for clarity (e.g., 'YearlyReturn_mean' instead of ('YearlyReturn', 'mean'))
     sector_stats.columns = [f"{col[0]}_{col[1]}" for col in sector_stats.columns]
+    
+    # Sort sectors by average yearly return in descending order
     sector_stats = sector_stats.sort_values('YearlyReturn_mean', ascending=False)
     
     # Add rank percentile (lower is better)
     sector_stats['Rank_Percentile'] = sector_stats['Rank_mean'] / data['Rank'].max() * 100
     
-    # Save to CSV
+    # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
+    
+    # Save sector performance statistics to CSV
     sector_stats.to_csv(f"{output_dir}/sector_performance.csv")
     print(f"Sector performance statistics saved to {output_dir}/sector_performance.csv")
     
-    # Create visualizations
+    # Create visualization of sector performance
     plt.figure(figsize=(12, 8))
+    
+    # Create horizontal bar chart of average returns by sector
     ax = sector_stats.sort_values('YearlyReturn_mean').plot(
         y='YearlyReturn_mean', kind='barh', 
-        xerr=sector_stats['YearlyReturn_std'],
-        color=plt.cm.viridis(np.linspace(0, 1, len(sector_stats))),
+        xerr=sector_stats['YearlyReturn_std'],  # Error bars showing standard deviation
+        color=plt.cm.viridis(np.linspace(0, 1, len(sector_stats))),  # Colormap for visual appeal
         legend=False
     )
     
-    # Add count annotations
+    # Add sample size annotations to each bar
     for i, v in enumerate(sector_stats['YearlyReturn_count']):
         ax.text(0.5, i, f"n={int(v)}", va='center', fontsize=10)
     
+    # Set chart title and labels
     plt.title('Average Yearly Return by Sector', fontsize=14)
     plt.xlabel('Yearly Return (%)', fontsize=12)
     plt.ylabel('Sector', fontsize=12)
     plt.grid(axis='x', alpha=0.3)
     plt.tight_layout()
+    
+    # Save the visualization
     plt.savefig(f"{output_dir}/sector_returns.png", dpi=300)
     
     return sector_stats
 
 def analyze_top_stocks_by_sector(data, output_dir):
-    """Find top performing stocks in each sector."""
+    """
+    Identify and analyze top performing stocks in each sector.
+    
+    This function:
+    1. Finds the top performing stocks in each sector based on ranking
+    2. Creates a detailed text report of the top stocks by sector
+    3. Generates a visual comparison of top stocks across sectors
+    4. Saves results to text and image files
+    
+    Args:
+        data (pd.DataFrame): Merged data containing rankings, sectors, and metrics
+        output_dir (str): Directory where output files will be saved
+    
+    Returns:
+        dict: Dictionary mapping sectors to their top stocks
+    """
     print("\nIdentifying top stocks by sector...")
     
+    # Get the list of all sectors and sort alphabetically
     sectors = sorted(data['Sector'].unique())
+    
+    # Dictionary to store top stocks for each sector
     top_stocks_by_sector = {}
     
-    # Create a nice formatted output
+    # Create a detailed text report
     with open(f"{output_dir}/top_stocks_by_sector.txt", 'w') as f:
+        # Write report header
         f.write(f"Top Performing Stocks by Sector\n")
         f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         f.write(f"{'='*80}\n\n")
         
+        # Process each sector
         for sector in sectors:
+            # Get data for this sector and sort by rank (best first)
             sector_data = data[data['Sector'] == sector].sort_values('Rank')
+            
+            # Write sector header
             f.write(f"\n## {sector} Sector\n\n")
             f.write(f"Average Return: {sector_data['YearlyReturn'].mean():.2f}%\n")
             f.write(f"Number of Stocks: {len(sector_data)}\n\n")
             
+            # Write information about top stocks in this sector
             if len(sector_data) > 0:
                 f.write("Top 5 Stocks:\n")
                 for i, (_, row) in enumerate(sector_data.head(5).iterrows()):
+                    # Stock name and identifier
                     f.write(f"{i+1}. {row['Name']} (ISIN: {row['ISIN']})\n")
+                    
+                    # Performance metrics
                     f.write(f"   - Yearly Return: {row['YearlyReturn']:.2f}%\n")
                     f.write(f"   - Overall Rank: {row['Rank']}\n")
                     
@@ -177,7 +276,7 @@ def analyze_top_stocks_by_sector(data, output_dir):
                             f.write(f"   - {metric}: {row[metric]:.2f}\n")
                     f.write("\n")
             
-            # Save top 10 stocks from each sector to a dictionary for later visualization
+            # Save top 10 stocks from each sector for later visualization
             top_stocks_by_sector[sector] = sector_data.head(10)
     
     print(f"Top stocks by sector analysis saved to {output_dir}/top_stocks_by_sector.txt")
@@ -185,18 +284,24 @@ def analyze_top_stocks_by_sector(data, output_dir):
     # Create a visual comparison of top stocks across sectors
     plt.figure(figsize=(15, 10))
     
-    # Plot only sectors with at least 3 stocks
+    # Plot only sectors that have at least 3 stocks
     valid_sectors = [sector for sector in sectors if len(data[data['Sector'] == sector]) >= 3]
     num_sectors = len(valid_sectors)
     
     if num_sectors > 0:
+        # Create a colormap for visual distinction between sectors
         colors = plt.cm.viridis(np.linspace(0, 1, num_sectors))
         
+        # Plot top 3 stocks for each sector
         for i, sector in enumerate(valid_sectors):
+            # Get top 3 stocks by return in this sector
             sector_data = data[data['Sector'] == sector].sort_values('YearlyReturn', ascending=False).head(3)
+            
+            # Calculate positions for bars (staggered by sector)
             positions = np.array([j + i*0.3 for j in range(len(sector_data))])
             returns = sector_data['YearlyReturn'].values
             
+            # Plot bars for this sector
             plt.bar(positions, returns, width=0.2, color=colors[i], label=sector, alpha=0.7)
             
             # Add stock names as annotations
@@ -204,53 +309,86 @@ def analyze_top_stocks_by_sector(data, output_dir):
                 plt.text(positions[j], returns[j] + 1, row['Name'], 
                         ha='center', va='bottom', rotation=90, fontsize=8)
         
+        # Add a horizontal line at y=0 to show positive/negative returns
         plt.axhline(y=0, color='r', linestyle='-', alpha=0.3)
+        
+        # Set chart labels and title
         plt.xlabel('Top 3 Stocks by Sector', fontsize=12)
         plt.ylabel('Yearly Return (%)', fontsize=12)
         plt.title('Top 3 Performing Stocks by Sector', fontsize=14)
-        plt.xticks([])
+        plt.xticks([])  # Hide x-axis ticks as they're not meaningful
         plt.legend(title='Sector', loc='best', fontsize=10)
         plt.grid(axis='y', alpha=0.3)
         plt.tight_layout()
+        
+        # Save the visualization
         plt.savefig(f"{output_dir}/top_stocks_comparison.png", dpi=300)
     
     return top_stocks_by_sector
 
 def analyze_sector_concentration(data, output_dir):
-    """Analyze concentration of stocks within sectors."""
+    """
+    Analyze the concentration of stocks and returns across sectors.
+    
+    This function:
+    1. Calculates the distribution of stocks across sectors
+    2. Analyzes sector contribution to overall market returns
+    3. Generates visualizations of sector concentration
+    4. Saves results to CSV and image files
+    
+    Args:
+        data (pd.DataFrame): Merged data containing rankings and sector information
+        output_dir (str): Directory where output files will be saved
+    
+    Returns:
+        pd.DataFrame: DataFrame with sector concentration metrics
+    """
     print("\nAnalyzing sector concentration...")
     
-    # Sector distribution
+    # Calculate stock count and percentage by sector
     sector_counts = data['Sector'].value_counts()
     sector_percentages = data['Sector'].value_counts(normalize=True) * 100
     
-    # Sector contribution to overall market (based on ranked stocks)
-    sector_contribution = data.groupby('Sector')['YearlyReturn'].sum() / data['YearlyReturn'].sum() * 100
+    # Calculate sector contribution to overall market returns
+    # Handle case where sum of returns might be negative or zero
+    total_returns = data['YearlyReturn'].sum()
+    if total_returns != 0:
+        sector_contribution = data.groupby('Sector')['YearlyReturn'].sum() / abs(total_returns) * 100
+        # Ensure all values are positive for pie chart
+        if (sector_contribution < 0).any():
+            # If negative values exist, use absolute values and note in output
+            sector_contribution = sector_contribution.abs()
+            print("Note: Using absolute values for sector contribution due to negative returns")
+    else:
+        # If total returns are zero, use equal contribution
+        sector_contribution = pd.Series(100 / len(sector_counts), index=sector_counts.index)
     
-    # Combine metrics
+    # Combine metrics into a single DataFrame
     concentration = pd.DataFrame({
         'Count': sector_counts,
         'Percentage': sector_percentages,
         'ReturnContribution': sector_contribution
     }).fillna(0).sort_values('Count', ascending=False)
     
-    # Save to CSV
+    # Save concentration metrics to CSV
     concentration.to_csv(f"{output_dir}/sector_concentration.csv")
     print(f"Sector concentration analysis saved to {output_dir}/sector_concentration.csv")
     
-    # Visualize concentration
+    # Create visualizations of sector concentration
     plt.figure(figsize=(12, 6))
     
-    # Plot count and contribution
+    # Create two pie charts side by side
+    # Left: Distribution of stocks by sector
     plt.subplot(1, 2, 1)
     concentration.plot.pie(y='Count', autopct='%1.1f%%', 
                            startangle=90, shadow=False, 
                            title='Stock Distribution by Sector', ax=plt.gca())
     
+    # Right: Contribution to total returns by sector
     plt.subplot(1, 2, 2)
     concentration.plot.pie(y='ReturnContribution', autopct='%1.1f%%',
                            startangle=90, shadow=False, 
-                           title='Return Contribution by Sector', ax=plt.gca())
+                           title='Return Contribution by Sector (Absolute)', ax=plt.gca())
     
     plt.tight_layout()
     plt.savefig(f"{output_dir}/sector_concentration.png", dpi=300)
@@ -258,31 +396,52 @@ def analyze_sector_concentration(data, output_dir):
     return concentration
 
 def analyze_sector_metrics(data, output_dir):
-    """Analyze financial metrics by sector."""
+    """
+    Analyze financial metrics by sector.
+    
+    This function:
+    1. Calculates average financial metrics for each sector
+    2. Creates visualizations of key metrics by sector
+    3. Saves results to CSV and image files
+    
+    Args:
+        data (pd.DataFrame): Merged data containing rankings, sectors, and financial metrics
+        output_dir (str): Directory where output files will be saved
+    
+    Returns:
+        pd.DataFrame or None: DataFrame with sector financial metrics, or None if metrics are unavailable
+    """
     print("\nAnalyzing financial metrics by sector...")
     
-    # Check if we have financial metrics
+    # Check if we have financial metrics in the data
     metrics_cols = [col for col in data.columns if col in ['PE_Ratio', 'PB_Ratio', 'ROE', 'DebtToAsset', 'DividendYield']]
     
+    # Skip this analysis if no metrics are available
     if not metrics_cols:
         print("No financial metrics available. Skipping sector metrics analysis.")
         return None
     
-    # Mean metrics by sector
+    # Calculate mean metrics by sector
     metrics_by_sector = data.groupby('Sector')[metrics_cols].mean()
+    
+    # Save metrics to CSV
     metrics_by_sector.to_csv(f"{output_dir}/sector_metrics.csv")
     print(f"Sector financial metrics saved to {output_dir}/sector_metrics.csv")
     
-    # Visualize metrics by sector
+    # Create visualizations of metrics by sector
     n_metrics = len(metrics_cols)
     fig, axes = plt.subplots(n_metrics, 1, figsize=(12, n_metrics * 4))
     
+    # Handle the case where there's only one metric
     if n_metrics == 1:
-        axes = [axes]  # Handle single metric case
+        axes = [axes]
     
+    # Create a bar chart for each metric
     for i, metric in enumerate(metrics_cols):
-        # Sort for this specific metric
+        # Sort sectors by this specific metric for better visualization
         sorted_metrics = metrics_by_sector.sort_values(metric)
+        
+        # Plot horizontal bar chart
         sorted_metrics[metric].plot(kind='barh', ax=axes[i])
         axes[i].set_title(f'{metric} by Sector', fontsize=12)
         axes[i].grid(axis='x', alpha=0.3)
@@ -293,56 +452,78 @@ def analyze_sector_metrics(data, output_dir):
     return metrics_by_sector
 
 def generate_sector_report(sector_stats, concentration, metrics_by_sector, output_dir):
-    """Generate a comprehensive sector analysis report."""
+    """
+    Generate a comprehensive sector analysis report.
+    
+    This function:
+    1. Compiles insights from various sector analyses
+    2. Identifies investment implications based on the analysis
+    3. Creates a well-structured text report with recommendations
+    
+    Args:
+        sector_stats (pd.DataFrame): Sector performance statistics
+        concentration (pd.DataFrame): Sector concentration metrics
+        metrics_by_sector (pd.DataFrame): Financial metrics by sector
+        output_dir (str): Directory where the report will be saved
+    """
     print("\nGenerating sector analysis report...")
     
     with open(f"{output_dir}/sector_analysis_report.txt", 'w') as f:
+        # Report header
         f.write("Renaissance Stock Ranking System - Sector Analysis Report\n")
         f.write("=====================================================\n\n")
         f.write(f"Report generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         
-        # Sector performance summary
+        # Section 1: Sector Performance Summary
         f.write("1. Sector Performance Summary\n")
         f.write("-----------------------------\n\n")
+        
+        # Top performing sectors
         f.write("Top 3 performing sectors:\n")
         for i, (sector, row) in enumerate(sector_stats.head(3).iterrows()):
             f.write(f"{i+1}. {sector}: {row['YearlyReturn_mean']:.2f}% avg. return (n={int(row['YearlyReturn_count'])})\n")
         
+        # Bottom performing sectors
         f.write("\nBottom 3 performing sectors:\n")
         for i, (sector, row) in enumerate(sector_stats.tail(3).iterrows()):
             f.write(f"{i+1}. {sector}: {row['YearlyReturn_mean']:.2f}% avg. return (n={int(row['YearlyReturn_count'])})\n")
         
-        # Sector concentration
+        # Section 2: Sector Concentration
         f.write("\n\n2. Sector Concentration\n")
         f.write("------------------------\n\n")
+        
+        # Sectors by number of stocks
         f.write("Sectors by number of ranked stocks:\n")
         for i, (sector, row) in enumerate(concentration.head(5).iterrows()):
             f.write(f"{i+1}. {sector}: {int(row['Count'])} stocks ({row['Percentage']:.1f}% of total)\n")
         
+        # Sectors by contribution to returns
         f.write("\nSectors by contribution to total returns:\n")
         for i, (sector, value) in enumerate(concentration.sort_values('ReturnContribution', ascending=False).head(5)['ReturnContribution'].items()):
             f.write(f"{i+1}. {sector}: {value:.1f}% of total returns\n")
         
-        # Financial metrics by sector
+        # Section 3: Financial Metrics by Sector (if available)
         if metrics_by_sector is not None:
             f.write("\n\n3. Financial Metrics by Sector\n")
             f.write("------------------------------\n\n")
             
             metrics_cols = metrics_by_sector.columns
             
+            # For each metric, show highest, lowest, and average values
             for metric in metrics_cols:
                 f.write(f"\n{metric}:\n")
                 f.write(f"  Highest: {metrics_by_sector[metric].idxmax()} ({metrics_by_sector[metric].max():.2f})\n")
                 f.write(f"  Lowest: {metrics_by_sector[metric].idxmin()} ({metrics_by_sector[metric].min():.2f})\n")
                 f.write(f"  Average across all sectors: {metrics_by_sector[metric].mean():.2f}\n")
         
-        # Investment implications
+        # Section 4: Investment Implications
         f.write("\n\n4. Investment Implications\n")
         f.write("---------------------------\n\n")
         f.write("Based on the sector analysis, consider the following investment strategies:\n\n")
         
-        # Get top performing sectors with low valuation
+        # Generate investment strategy suggestions based on the analysis
         if metrics_by_sector is not None and 'PE_Ratio' in metrics_by_sector.columns:
+            # Identify value opportunities (high returns + low PE)
             top_return_sectors = set(sector_stats.head(5).index)
             low_pe_sectors = set(metrics_by_sector.sort_values('PE_Ratio').head(5).index)
             value_sectors = top_return_sectors.intersection(low_pe_sectors)
@@ -353,7 +534,7 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
                     f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% return, " + 
                            f"PE: {metrics_by_sector.loc[sector, 'PE_Ratio']:.2f}\n")
             
-            # High growth sectors
+            # High growth sectors (regardless of valuation)
             high_growth = sector_stats.head(3).index
             f.write("\nb) Growth Focus Sectors (highest returns, regardless of valuation):\n")
             for sector in high_growth:
@@ -362,12 +543,16 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
             # Diversification suggestions
             f.write("\nc) Diversification Opportunities:\n")
             f.write("   Consider allocation across the following sectors for diversification:\n")
-            diverse_sectors = sector_stats.iloc[::max(1, len(sector_stats)//5)].index[:5]  # Get 5 sectors across the performance range
+            # Get 5 sectors distributed across the performance range
+            diverse_sectors = sector_stats.iloc[::max(1, len(sector_stats)//5)].index[:5]
             for sector in diverse_sectors:
                 f.write(f"   - {sector}\n")
         
+        # Section 5: Conclusion
         f.write("\n\n5. Conclusion\n")
         f.write("-------------\n\n")
+        
+        # Summarize key findings
         top_sector = sector_stats.index[0]
         worst_sector = sector_stats.index[-1]
         f.write(f"The {top_sector} sector has shown the strongest performance with " +
@@ -375,6 +560,7 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
                f"{worst_sector} sector has underperformed with " +
                f"{sector_stats.loc[worst_sector, 'YearlyReturn_mean']:.2f}% average returns.\n\n")
         
+        # Final recommendations
         f.write("This sector analysis should be used alongside individual stock analysis to develop a " +
                "comprehensive investment strategy. Market conditions can change rapidly, so regular " +
                "review of sector performance is recommended.\n")
@@ -382,36 +568,53 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
     print(f"Comprehensive sector analysis report saved to {output_dir}/sector_analysis_report.txt")
 
 def main():
-    """Main function to perform sector analysis."""
+    """
+    Main function to orchestrate the sector analysis workflow.
+    
+    Workflow:
+    1. Parse command-line arguments
+    2. Load required data files
+    3. Perform various sector analyses
+    4. Generate comprehensive report
+    5. Save all results to the specified output directory
+    
+    Returns:
+        int: Exit code (0 for success, 1 for error)
+    """
+    # Parse command-line arguments
     args = parse_arguments()
     
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
     
+    # Print header
     print("\nRenaissance Stock Ranking System - Sector Analysis")
     print("==================================================")
     
     try:
-        # Load all required data
+        # Step 1: Load all required data
         data = load_data(args)
         
-        # Perform sector analyses
+        # Step 2: Perform sector analyses
         sector_stats = analyze_sector_performance(data, args.output_dir)
         top_stocks = analyze_top_stocks_by_sector(data, args.output_dir)
         concentration = analyze_sector_concentration(data, args.output_dir)
         metrics_by_sector = analyze_sector_metrics(data, args.output_dir)
         
-        # Generate comprehensive report
+        # Step 3: Generate comprehensive report
         generate_sector_report(sector_stats, concentration, metrics_by_sector, args.output_dir)
         
+        # Print success message
         print("\nSector analysis completed successfully.")
         print(f"Results saved to {args.output_dir}")
         
     except Exception as e:
+        # Handle any errors that occur during processing
         print(f"\nError during sector analysis: {str(e)}")
-        return 1
+        return 1  # Return error code
     
-    return 0
+    return 0  # Return success code
 
 if __name__ == "__main__":
+    # Execute the main function and exit with the returned status code
     exit(main()) 
