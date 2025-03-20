@@ -2,6 +2,24 @@
 
 This guide provides detailed, step-by-step instructions for extracting data from the Bloomberg Terminal for the Renaissance Stock Ranking System. It is designed to be accessible even if you have limited Bloomberg Terminal experience.
 
+## Table of Contents
+1. [Visual Workflow Overview](#visual-workflow-overview)
+2. [Prepare Your Workspace](#prepare-your-workspace)
+3. [Extract NIFTY 500 Constituent List](#extract-nifty-500-constituent-list)
+   - [Method A: Using Bloomberg Excel Add-in](#method-a-using-bloomberg-excel-add-in-recommended)
+   - [Method B: Manual Extraction via Bloomberg Terminal](#method-b-manual-extraction-via-bloomberg-terminal)
+4. [Format and Save Constituent List](#format-and-save-constituent-list)
+5. [Extract Historical Price Data](#extract-historical-price-data)
+   - [Method A: Using Bloomberg Excel Add-in](#method-a-using-bloomberg-excel-add-in-recommended-1)
+   - [Method B: Using Bulk Data Export](#method-b-using-bulk-data-export-from-bloomberg-terminal)
+6. [Format and Save Price Data](#format-and-save-price-data)
+7. [Extract Financial Metrics (Optional)](#extract-financial-metrics-optional)
+8. [Place Files in the Data Folder](#place-files-in-the-data-folder)
+9. [Troubleshooting Common Issues](#troubleshooting-common-issues)
+10. [Tips for Efficient Extraction](#tips-for-efficient-extraction)
+11. [Visual Guide for Non-Technical Users](#for-non-technical-users-visual-guide)
+12. [Summary Checklist](#summary-checklist)
+
 ## Visual Workflow Overview
 
 ```
@@ -48,7 +66,7 @@ This guide provides detailed, step-by-step instructions for extracting data from
 └───────────────────────────────────────────────────────────────┘
 ```
 
-## Step 1: Prepare Your Workspace
+## Prepare Your Workspace
 
 Before you begin extracting data, make sure you have the following ready:
 
@@ -58,7 +76,7 @@ Before you begin extracting data, make sure you have the following ready:
 
 **TIP**: Create a dedicated folder on your desktop to temporarily store the exported files before moving them to the `data` folder.
 
-## Step 2: Extract NIFTY 500 Constituent List
+## Extract NIFTY 500 Constituent List
 
 The constituent list contains all the stocks in the NIFTY 500 index with their identifying information.
 
@@ -110,7 +128,7 @@ If the Excel Add-in is not working, you can extract the data directly from the T
 6. **Select "Export to Excel"**
 7. Save the file to your designated folder
 
-## Step 3: Format and Save Constituent List
+## Format and Save Constituent List
 
 Now that you have the constituent data, you need to format it properly:
 
@@ -140,7 +158,7 @@ INE030A01027,Reliance Industries Ltd,RIL IN,Energy
 ...
 ```
 
-## Step 4: Extract Historical Prices
+## Extract Historical Price Data
 
 Now you need to get historical monthly closing prices for all the stocks in the NIFTY 500 list.
 
@@ -198,7 +216,7 @@ For large datasets, Bloomberg's bulk export might be faster:
 4. Click "Export" and wait for the data to be processed
 5. Save the file when prompted
 
-## Step 5: Format and Save Price Data
+## Format and Save Price Data
 
 After extracting the price data, you need to format it correctly:
 
@@ -229,7 +247,7 @@ INE009A01021,2022-01-31,1486.70
 ...
 ```
 
-## Step 6: (Optional) Extract Financial Metrics
+## Extract Financial Metrics (Optional)
 
 For enhanced analysis capabilities, you can also extract financial metrics:
 
@@ -246,7 +264,15 @@ For enhanced analysis capabilities, you can also extract financial metrics:
    - Ensure the data has these columns: `ISIN,PE_Ratio,PB_Ratio,ROE,DebtToAsset,DividendYield`
    - Save as `financial_metrics.csv` in your designated folder
 
-## Step 7: Place Files in the 'data' Folder
+Your file should look like this when opened in a text editor:
+```
+ISIN,PE_Ratio,PB_Ratio,ROE,DebtToAsset,DividendYield
+INE009A01021,23.8,4.2,25.6,0.12,1.8
+INE062A01020,27.6,11.5,41.2,0.07,1.4
+INE040A01034,19.5,3.2,16.8,0.56,0.7
+```
+
+## Place Files in the Data Folder
 
 Finally, move your extracted files to the correct location:
 
@@ -289,6 +315,18 @@ Finally, move your extracted files to the correct location:
   - Process data in smaller batches (e.g., 100 stocks at a time)
   - Consider using the Bloomberg API if you have programming experience
   - See the [Bloomberg API Guide](bloomberg_api_guide.md) for automated extraction
+
+### Problem: Not all NIFTY 500 constituents are available
+**Solution**: Verify that you're looking at the current NIFTY 500 index. Some constituents may have been added or removed recently. Use the most recent official list.
+
+### Problem: Missing historical price data for some stocks
+**Solution**: Some stocks might have been newly listed or may not have price data for the entire period. The system can handle these gaps, but try to get as complete data as possible.
+
+### Problem: Dates are not in the correct format
+**Solution**: Ensure dates are in YYYY-MM-DD format. In Excel, select the date column and apply formatting: Custom > "yyyy-mm-dd".
+
+### Problem: UTF-8 encoding issues in company names
+**Solution**: Save your CSV files with UTF-8 encoding. In Excel: File > Save As > Select CSV > Tools > Web Options > Encoding > "Unicode (UTF-8)".
 
 ## Summary Checklist
 
@@ -341,3 +379,25 @@ This is like a price diary for each company over time:
 ```
 
 If you follow this visual guide, you'll have the data in the perfect format for the system to analyze!
+
+## Tips for Efficient Extraction
+
+1. **Use Bulk Operations**: Extract data for all securities at once rather than one by one to save time.
+
+2. **Automate Recurring Extractions**: Consider setting up a Bloomberg API connection for automated extraction (see the [Bloomberg API Guide](bloomberg_api_guide.md)).
+
+3. **Check for Corporate Actions**: Ensure that historical price data is adjusted for stock splits, dividends, etc. In Bloomberg, select "Last Price Adjusted" when available.
+
+4. **Regular Updates**: Update your data monthly for the best results. Schedule a specific day each month for this task.
+
+5. **Data Validation**: Always check a sample of the extracted data against the Bloomberg Terminal values to ensure accuracy.
+
+## Next Steps
+
+After successfully extracting and formatting all the required data files, place them in the `data/` directory of your Renaissance Stock Ranking System installation, and you're ready to run the ranking process using:
+
+```bash
+python scripts/run_ranking.py
+```
+
+For automated data extraction, see the [Bloomberg API Guide](bloomberg_api_guide.md).

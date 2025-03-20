@@ -12,6 +12,16 @@ This additional perspective enables portfolio managers to:
 - Find top-performing stocks within specific sectors
 - Balance sector exposure for optimal diversification
 
+## Table of Contents
+
+1. [Key Features](#key-features)
+2. [Usage Guide](#usage-guide)
+3. [Output Files and Visualizations](#output-files-and-visualizations)
+4. [Interpretation Guide](#interpretation-guide)
+5. [Advanced Applications](#advanced-applications)
+6. [Technical Implementation](#technical-implementation)
+7. [Extending the Analysis](#extending-the-analysis)
+
 ## Key Features
 
 ### 1. Sector Performance Analysis
@@ -19,178 +29,333 @@ This additional perspective enables portfolio managers to:
 - **Calculates key statistics by sector**: Average return, median return, standard deviation, min/max returns
 - **Ranks sectors** by performance metrics
 - **Visualizes sector performance** with informative charts
-- **Includes risk metrics** (standard deviation) to understand volatility by sector
 
-### 2. Top Stocks by Sector
+### 2. Sector Concentration Analysis
 
-- **Identifies the best-performing stocks within each sector**
-- **Creates detailed profiles** of top performers in each sector
-- **Generates visual comparisons** of top stocks across sectors
-- **Highlights sector champions** for targeted investment
+- **Analyzes sector exposure**: Shows how stocks are distributed across sectors
+- **Identifies index concentration**: Highlights sectors with outsized representation
+- **Monitors sector dynamics**: Tracks changes in sector weightings over time
 
-### 3. Sector Concentration Analysis
+### 3. Top Stocks by Sector
 
-- **Evaluates the distribution of stocks across sectors**
-- **Analyzes how each sector contributes to overall market returns**
-- **Creates visualizations of sector distribution and contribution**
-- **Helps identify overrepresented or underrepresented sectors**
+- **Identifies leading stocks** within each sector
+- **Provides deep sector-specific metrics**: PE ratio, PB ratio, ROE, etc.
+- **Enables apples-to-apples comparison**: Compare stocks against sector peers
 
-### 4. Financial Metrics by Sector
+### 4. Financial Metrics Comparison
 
-- **Calculates average financial metrics for each sector**, including:
-  - Price-to-Earnings Ratio (P/E)
-  - Price-to-Book Ratio (P/B)
-  - Return on Equity (ROE)
-  - Debt-to-Asset Ratio
-  - Dividend Yield
-- **Visualizes metrics by sector** for easy comparison
-- **Enables identification of value opportunities** (sectors with strong performance but low valuations)
+- **Analyzes valuation metrics by sector**: PE ratio, PB ratio, etc.
+- **Identifies sector valuation trends**: Which sectors are expensive or cheap
+- **Enables relative value analysis**: Compare sectors on financial metrics
 
-### 5. Comprehensive Report Generation
-
-- **Synthesizes findings into an actionable report**
-- **Provides investment strategy suggestions** based on sector analysis
-- **Highlights value opportunities, growth sectors, and diversification strategies**
-- **Delivers clear, actionable insights** for portfolio managers
-
-## Requirements
-
-- Completed ranking analysis from the main system
-- NIFTY 500 constituent list with sector information
-- (Optional) Financial metrics for enhanced analysis
-
-## Usage
+## Usage Guide
 
 ### Basic Usage
 
-```bash
-python docs/sector_analysis.py
-```
-
-This will automatically:
-1. Find the latest ranking outputs
-2. Load the NIFTY 500 list with sector information
-3. Load financial metrics if available
-4. Perform all sector analyses
-5. Generate outputs in the `output/sector_analysis` directory
-
-### Advanced Options
+The sector analysis can be run as a standalone script:
 
 ```bash
-python docs/sector_analysis.py --output-dir custom/output/path --rankings-file path/to/rankings.csv --nifty500-file path/to/nifty500_with_sectors.csv --metrics-file path/to/metrics.csv
+python scripts/analyze_sectors.py
 ```
 
-### Command-line Arguments
+This will:
+1. Load the latest ranking results from `output/NIFTY500_Rankings_*.csv`
+2. Load the financial metrics from `data/financial_metrics.csv` (optional)
+3. Load the NIFTY 500 list with sector information from `data/nifty500_list.csv`
+4. Generate sector analysis reports in `output/sector_analysis/`
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--output-dir` | Directory where analysis outputs will be saved | `output/sector_analysis` |
-| `--rankings-file` | Path to the rankings file | Latest in `output/` |
-| `--nifty500-file` | Path to the NIFTY 500 list with sectors | `data/nifty500_list.csv` |
-| `--metrics-file` | Path to the financial metrics file | Latest in `output/` |
+### Command-Line Options
 
-## Output Files
+For customization, use the following options:
 
-The sector analysis generates the following outputs:
-
-| File | Description |
-|------|-------------|
-| `sector_performance.csv` | Statistical performance metrics for each sector |
-| `sector_returns.png` | Visualization of average yearly returns by sector |
-| `top_stocks_by_sector.txt` | Detailed report of top performers in each sector |
-| `top_stocks_comparison.png` | Visual comparison of top stocks across sectors |
-| `sector_concentration.csv` | Analysis of sector distribution and contribution |
-| `sector_concentration.png` | Visualization of sector distribution and contribution |
-| `sector_metrics.csv` | Financial metrics averaged by sector |
-| `sector_metrics.png` | Visualizations of financial metrics by sector |
-| `sector_analysis_report.txt` | Comprehensive analysis report with investment implications |
-
-## Using Sector Analysis in Portfolio Construction
-
-The sector analysis outputs can be used in several ways to enhance portfolio construction:
-
-### 1. Sector Rotation Strategy
-
-Use the sector performance analysis to identify the strongest performing sectors and adjust allocations to overweight these sectors in the portfolio.
-
-### 2. Targeted Stock Selection
-
-Combine the main ranking system's stock-level insights with sector analysis to identify the highest-ranked stocks within the top-performing sectors.
-
-### 3. Risk Management Through Diversification
-
-Use the sector concentration analysis to ensure proper diversification across sectors, avoiding overexposure to any single sector.
-
-### 4. Value Opportunity Identification
-
-Look for sectors with strong performance but relatively low valuation metrics (P/E, P/B) as potential value opportunities.
-
-### 5. Quality Enhancement
-
-Use sector-level financial metrics to focus on sectors with high-quality characteristics (high ROE, low debt, sustainable dividends).
-
-## Integration with Bloomberg API
-
-When using the Bloomberg API integration:
-
-1. The `bloomberg_data_extractor.py` script automatically retrieves GICS sector classifications for all NIFTY 500 constituents
-2. It also collects key financial metrics that enhance the sector analysis
-3. This data is seamlessly integrated into the sector analysis workflow
-
-For more information on the Bloomberg API integration, see the [Bloomberg API Guide](bloomberg_api_guide.md).
-
-## Examples
-
-### Identifying Sector Trends
-
-```python
-import pandas as pd
-
-# Load sector performance data
-sector_performance = pd.read_csv('output/sector_analysis/sector_performance.csv')
-
-# Identify top 3 sectors by average return
-top_sectors = sector_performance.sort_values('YearlyReturn_mean', ascending=False).head(3)
-print("Top 3 sectors:", top_sectors.index.tolist())
-
-# Identify sectors with best risk-adjusted returns (return / std)
-sector_performance['RiskAdjustedReturn'] = sector_performance['YearlyReturn_mean'] / sector_performance['YearlyReturn_std']
-best_risk_adjusted = sector_performance.sort_values('RiskAdjustedReturn', ascending=False).head(3)
-print("Best risk-adjusted returns:", best_risk_adjusted.index.tolist())
+```bash
+python scripts/analyze_sectors.py --help
 ```
 
-### Creating a Sector-Based Portfolio
+Common options:
+- `--rankings-file`: Path to the rankings CSV file
+- `--metrics-file`: Path to the financial metrics CSV file
+- `--nifty500-file`: Path to the NIFTY 500 list CSV file with sector information
+- `--output-dir`: Directory to save sector analysis outputs
+- `--visualization`: Whether to generate visualizations (default: True)
 
-```python
-import pandas as pd
+### Integration with Main Workflow
 
-# Load individual stock rankings and sector data
-rankings = pd.read_csv('output/NIFTY500_Rankings_20250315.csv')
-nifty500 = pd.read_csv('data/nifty500_list.csv')
+Typically, sector analysis is run after the core ranking process:
 
-# Merge to get sector information
-data = pd.merge(rankings, nifty500[['ISIN', 'Sector']], on='ISIN')
+```bash
+# 1. Run the core ranking system
+python scripts/run_ranking.py
 
-# Load sector performance to identify top sectors
-sector_performance = pd.read_csv('output/sector_analysis/sector_performance.csv')
-top_3_sectors = sector_performance.sort_values('YearlyReturn_mean', ascending=False).head(3).index
+# 2. Generate visualizations
+python scripts/visualize_results.py
 
-# Get top 5 stocks from each of the top 3 sectors
-portfolio = []
-for sector in top_3_sectors:
-    top_stocks = data[data['Sector'] == sector].sort_values('Rank').head(5)
-    portfolio.append(top_stocks)
-
-# Combine into a single portfolio DataFrame
-portfolio_df = pd.concat(portfolio)
-print(f"Portfolio contains {len(portfolio_df)} stocks from the top 3 sectors")
-print(portfolio_df[['Name', 'Sector', 'Rank', 'YearlyReturn']])
+# 3. Perform sector analysis
+python scripts/analyze_sectors.py
 ```
 
-## Author
+## Output Files and Visualizations
 
-Renaissance Investment Managers
+The sector analysis module generates several output files and visualizations:
 
-## Version
+### 1. Sector Performance File
 
-1.0.0 (March 2025) 
+**Filename**: `sector_performance.csv`
+
+**Description**: Contains performance metrics for each sector, including:
+- Mean, median, and standard deviation of yearly returns
+- Minimum and maximum returns within each sector
+- Number of stocks in each sector
+- Average rank and rank percentile
+
+**Example**:
+```
+Sector,YearlyReturn_mean,YearlyReturn_median,YearlyReturn_std,YearlyReturn_min,YearlyReturn_max,YearlyReturn_count,Rank_mean,Rank_median,Rank_min,Rank_Percentile
+Information Technology,18.5,16.7,12.3,-15.2,55.8,75,112.4,98,3,22.5
+Financials,12.3,10.5,8.7,-8.2,38.7,98,235.6,245,5,47.1
+```
+
+### 2. Sector Concentration File
+
+**Filename**: `sector_concentration.csv`
+
+**Description**: Analyzes the distribution of stocks across sectors:
+- Number of stocks in each sector
+- Percentage of index in each sector
+- Concentration metrics
+
+**Example**:
+```
+Sector,StockCount,Percentage,Concentration_Score
+Financials,98,19.6,1.23
+Information Technology,75,15.0,0.94
+```
+
+### 3. Sector Analysis Report
+
+**Filename**: `sector_analysis_report.txt`
+
+**Description**: A comprehensive text report summarizing the sector analysis findings:
+- Overall sector performance rankings
+- Investment implications
+- Top and bottom sectors
+- Concentration insights
+- Recommendations for sector allocation
+
+### 4. Financial Metrics By Sector
+
+**Filename**: `sector_financial_metrics_YYYYMMDD_HHMMSS.csv`
+
+**Description**: Aggregated financial metrics by sector:
+- Average PE ratio, PB ratio, ROE, etc. for each sector
+- Min/max/median values for each metric by sector
+- Relative valuation comparisons
+
+### 5. Top Stocks By Sector
+
+**Filename**: `top_stocks_by_sector.txt`
+
+**Description**: Detailed report listing the top-performing stocks in each sector:
+- Top 5 stocks by yearly return in each sector
+- Financial metrics for each stock
+- Comparison to sector averages
+
+### 6. Visualizations
+
+The module also generates several visualizations:
+
+- **Sector Returns Chart** (`sector_returns.png`): Bar chart showing average returns by sector
+- **Sector Concentration Chart** (`sector_concentration.png`): Pie chart showing sector distribution
+- **Financial Metrics Chart** (`sector_financial_metrics_chart_YYYYMMDD_HHMMSS.png`): Comparison of key financial metrics across sectors
+
+## Interpretation Guide
+
+### Sector Performance Analysis
+
+The sector performance analysis helps answer these key questions:
+
+1. **Which sectors are outperforming?**
+   - Look for sectors with high average yearly returns
+   - Pay attention to sectors with low rank numbers (closer to 1)
+   - Consider the rank percentile (lower percentile = better performance)
+
+2. **How consistent is sector performance?**
+   - Check the standard deviation of returns within each sector
+   - Compare median return to mean return (large differences indicate outliers)
+   - Look at the min/max spread to understand the range of performance
+
+3. **Which sectors offer the best risk-adjusted returns?**
+   - Calculate return-to-volatility ratio (mean return / standard deviation)
+   - Sectors with high returns and low standard deviation offer better risk-adjusted performance
+
+### Sector Concentration Analysis
+
+The concentration analysis helps understand:
+
+1. **Portfolio diversification**
+   - Is the index heavily concentrated in a few sectors?
+   - Are certain sectors significantly underrepresented?
+
+2. **Sector bias**
+   - Does the NIFTY 500 have structural biases toward certain sectors?
+   - How does the sector distribution compare to the overall economy?
+
+3. **Investment implications**
+   - Sectors with high concentration may have more impact on overall market movements
+   - Underrepresented sectors might offer unique diversification benefits
+
+### Top Stocks By Sector Analysis
+
+This analysis helps:
+
+1. **Identify sector leaders**
+   - Which stocks are consistently outperforming within their sectors?
+   - Do certain sectors have more standout performers than others?
+
+2. **Compare financial characteristics**
+   - How do top performers' financial metrics compare to sector averages?
+   - Are there patterns in the financial profiles of sector leaders?
+
+3. **Find value opportunities**
+   - Look for stocks with strong performance but below-average valuations
+   - Identify sectors where top performers still have reasonable valuations
+
+## Advanced Applications
+
+### Sector Rotation Strategy
+
+The sector analysis can be used to implement a sector rotation strategy:
+
+1. **Overweight outperforming sectors**
+   - Allocate more capital to sectors with strong recent performance
+   - Focus on sectors with improving rankings
+
+2. **Identify sector trends**
+   - Monitor changes in sector performance over time
+   - Look for emerging sector leadership
+
+3. **Tactical allocation**
+   - Adjust sector weights based on performance momentum
+   - Consider economic cycle positioning when interpreting sector performance
+
+### Relative Value Analysis
+
+Use the financial metrics comparison to:
+
+1. **Identify relatively undervalued sectors**
+   - Compare PE ratios, PB ratios across sectors
+   - Consider historical valuation ranges for each sector
+
+2. **Find mispriced stocks within sectors**
+   - Look for stocks trading at discounts to sector averages
+   - Compare stock metrics to sector medians rather than means (reduces outlier impact)
+
+3. **Develop sector-specific screening criteria**
+   - Different sectors have different "normal" valuation ranges
+   - Set sector-specific thresholds for financial metrics
+
+### Risk Management Applications
+
+Sector analysis improves risk management by:
+
+1. **Monitoring sector concentration**
+   - Avoid excessive exposure to any single sector
+   - Maintain balanced sector allocations
+
+2. **Understanding correlations**
+   - Certain sectors are more correlated than others
+   - Diversify across less-correlated sectors
+
+3. **Anticipating sector-specific risks**
+   - Regulatory changes often affect entire sectors
+   - Economic shifts impact different sectors differently
+
+## Technical Implementation
+
+### Core Components
+
+The sector analysis module consists of several key components:
+
+1. **Data Integration**
+   - Merges stock rankings with sector classifications
+   - Incorporates financial metrics if available
+   - Handles missing data and outliers
+
+2. **Statistical Analysis**
+   - Calculates descriptive statistics by sector
+   - Performs ranking and percentile calculations
+   - Computes concentration metrics
+
+3. **Visualization Engine**
+   - Generates insightful charts and graphs
+   - Creates formatted reports
+   - Exports data in multiple formats
+
+### Data Requirements
+
+For full functionality, the sector analysis requires:
+
+1. **NIFTY 500 list with sector classifications**
+   - Must include ISIN and Sector columns
+   - GICS sectors recommended for consistency
+
+2. **Stock rankings from the core system**
+   - Contains ISIN, Name, Date, YearlyReturn, and Rank columns
+
+3. **Financial metrics** (optional but recommended)
+   - Provides additional metrics like PE_Ratio, PB_Ratio, ROE, etc.
+   - Enhances sector comparison capabilities
+
+## Extending the Analysis
+
+### Adding Custom Metrics
+
+You can extend the sector analysis with custom metrics:
+
+1. **Add new financial ratios**
+   - Include additional columns in your financial_metrics.csv file
+   - The system will automatically incorporate them into the analysis
+
+2. **Create custom sector-specific metrics**
+   - Modify the `calculate_sector_metrics` function in `renaissance/analysis/sector_analysis.py`
+   - Add your custom calculations
+
+3. **Implement custom scoring systems**
+   - Create weighted averages of multiple metrics
+   - Develop sector-specific scoring algorithms
+
+### Creating Custom Visualizations
+
+To add new visualization types:
+
+1. **Use matplotlib or seaborn**
+   - Add new visualization functions to the module
+   - Follow the existing pattern for consistency
+
+2. **Customize existing charts**
+   - Modify color schemes, layouts, or styles
+   - Add annotations or reference lines to highlight key information
+
+3. **Generate interactive visualizations**
+   - Consider using libraries like Plotly for interactive charts
+   - Export to HTML for interactive exploration
+
+### Integration with External Tools
+
+The sector analysis can be integrated with external tools:
+
+1. **Export to Excel**
+   - Create Excel templates that import the CSV outputs
+   - Use Excel's powerful visualization capabilities
+
+2. **Connect to business intelligence tools**
+   - Import sector analysis data into Tableau, Power BI, etc.
+   - Create custom dashboards
+
+3. **Incorporate into investment management systems**
+   - Feed sector allocation recommendations into portfolio management tools
+   - Use sector insights to guide trading decisions
+
+---
+
+For additional information, see the [Main User Guide](user_guide.md) and [Bloomberg API Guide](bloomberg_api_guide.md). 

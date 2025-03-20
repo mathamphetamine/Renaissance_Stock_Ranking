@@ -2,6 +2,25 @@
 
 This guide explains how to automate data extraction from Bloomberg using the Bloomberg API (BLPAPI) instead of manually exporting data. This approach saves time and reduces the potential for human error when collecting data for the Renaissance Stock Ranking System.
 
+## Table of Contents
+1. [Prerequisites](#prerequisites)
+2. [Getting Access to Bloomberg API](#getting-access-to-bloomberg-api)
+3. [Installation and Setup](#installation-and-setup)
+4. [Handling Authentication Securely](#handling-authentication-securely)
+5. [Step-by-Step Guide to Using the API](#step-by-step-guide-to-using-the-api)
+6. [Internal Implementation Details](#internal-implementation-details)
+7. [Enhanced Reliability Features](#enhanced-reliability-features)
+8. [Advanced Features](#advanced-features)
+9. [Test Mode for Development](#test-mode-for-development)
+10. [Performance Considerations](#performance-considerations)
+11. [Troubleshooting Bloomberg API Connection](#troubleshooting-bloomberg-api-connection)
+12. [Setting Up Scheduled Extraction](#setting-up-scheduled-extraction)
+13. [Bloomberg API vs. Manual Extraction](#bloomberg-api-vs-manual-extraction)
+14. [Bloomberg Fields Reference](#bloomberg-fields-reference)
+15. [Advanced Topics](#advanced-topics)
+16. [Need More Help?](#need-more-help)
+17. [References](#references)
+
 ## Prerequisites
 
 Before you can use the Bloomberg API integration, you need:
