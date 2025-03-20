@@ -75,13 +75,14 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def validate_input_data(nifty500_file: str, price_file: str) -> bool:
+def validate_input_data(nifty500_file: str, price_file: str, logger=None) -> bool:
     """
     Validate input data files before processing.
     
     Args:
         nifty500_file (str): Path to NIFTY 500 list CSV file
         price_file (str): Path to historical prices CSV file
+        logger: Logger instance to use, defaults to None
         
     Returns:
         bool: True if data is valid, False otherwise
@@ -89,6 +90,9 @@ def validate_input_data(nifty500_file: str, price_file: str) -> bool:
     Raises:
         ValueError: If data validation fails
     """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    
     logger.info("Validating input data files")
     
     # Check files exist
@@ -163,11 +167,8 @@ def validate_input_data(nifty500_file: str, price_file: str) -> bool:
 
 
 def main():
-    """Main entry point for the Renaissance Stock Ranking System."""
+    """Main entry point for the CLI application."""
     args = parse_arguments()
-    
-    # Ensure output directory exists
-    os.makedirs(args.output_dir, exist_ok=True)
     
     # Set up logging
     logger = setup_logging(args.output_dir)
@@ -177,15 +178,18 @@ def main():
     logger.info(f"Historical prices file: {args.price_file}")
     logger.info(f"Output directory: {args.output_dir}")
     
+    # Validate input data
     try:
-        # Validate input data
-        try:
-            validate_input_data(args.nifty500_file, args.price_file)
-        except Exception as e:
-            logger.error(f"Input data validation failed: {str(e)}")
-            logger.info("Please check your input files and try again.")
-            return 1
-        
+        validate_input_data(args.nifty500_file, args.price_file, logger)
+    except Exception as e:
+        logger.error(f"Input data validation failed: {str(e)}")
+        logger.info("Please check your input files and try again.")
+        return 1
+    
+    # Ensure output directory exists
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    try:
         # 1. Load data
         logger.info("Step 1: Loading data")
         try:
