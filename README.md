@@ -419,7 +419,7 @@ python scripts/analyze_sectors.py
 python scripts/generate_sector_strategy.py --output-file strategies/sector_allocation_$(date +%Y%m).pdf
 ```
 
-## Project Structure
+## Project Structure and Outputs
 
 ### Package Structure Diagram
 ```
@@ -616,6 +616,77 @@ head -n 5 data/historical_prices.csv
 
 #### Problem: Empty or incomplete results
 **Solution**: Ensure you have at least 13 months of price data to calculate yearly returns.
+
+### Code Issues
+
+#### Problem: "Logger is not defined" error
+```
+renaissance.cli.main - ERROR - Input data validation failed: name 'logger' is not defined
+```
+
+**Solution**: This occurs when the logger isn't properly initialized in the validate_input_data function. The system has been updated to handle this, but if you encounter this issue:
+
+1. Make sure you're using the latest version from GitHub
+2. Check that the `validate_input_data` function in `renaissance/cli/main.py` includes the logger parameter and proper initialization:
+   ```python
+   def validate_input_data(nifty500_file: str, price_file: str, logger=None) -> bool:
+       # Initialize logger if not provided
+       if logger is None:
+           logger = logging.getLogger(__name__)
+   ```
+3. Update the call to validate_input_data in the main function to pass the logger parameter
+
+#### Problem: Missing output directories
+**Solution**: The system should create output directories automatically, but you can manually create them:
+```bash
+mkdir -p output/visualizations output/sector_analysis output/logs
+```
+
+## Visualization Outputs
+
+The system generates several types of visualization outputs to help analyze the stock rankings and performance:
+
+### HTML Index File
+
+The main entry point for visualizations is an HTML index file located at `output/visualizations/visualization_index_YYYYMMDD_HHMMSS.html`. This file provides:
+
+- An organized overview of all generated visualizations
+- Detailed explanations for interpreting each chart
+- Navigation to individual visualization files
+
+### Types of Visualizations
+
+1. **Distribution Charts**
+   - **Return Distribution**: Shows how stock returns are distributed across the NIFTY 500
+   - **Rank Delta Distribution**: Displays how ranking changes are distributed
+
+2. **Performance Charts**
+   - **Top Performers**: Highlights the top 10-20 stocks with highest returns
+   - **Bottom Performers**: Shows the worst-performing stocks
+   - **Return by Quartile**: Compares returns across different performance quartiles
+
+3. **Change Analysis Charts**
+   - **Top Improvers**: Stocks with the biggest positive rank changes
+   - **Top Decliners**: Stocks with the biggest negative rank changes
+   - **Return vs. Rank Scatter**: Visualizes the relationship between returns and rankings
+
+### Data Export Files
+
+Along with the visualizations, the system exports CSV files with the underlying data:
+- `top_performers_YYYYMMDD_HHMMSS.csv`: Detailed data on top-performing stocks
+- `top_improvers_YYYYMMDD_HHMMSS.csv`: Stocks with the biggest ranking improvements
+- `top_decliners_YYYYMMDD_HHMMSS.csv`: Stocks with the biggest ranking declines
+
+### Interpreting Visualizations
+
+Each chart in the visualization suite is designed to provide insights:
+
+- **Return Distribution**: Look for whether returns are normally distributed or skewed
+- **Top/Bottom Performers**: Identify outliers and extreme performers
+- **Rank Changes**: Spot momentum shifts and trending stocks
+- **Sector Analysis Charts**: Understand sector rotation and relative performance
+
+For detailed examples of how to interpret these visualizations, refer to the HTML index file or the [User Guide](docs/user_guide.md).
 
 ## Need More Help?
 

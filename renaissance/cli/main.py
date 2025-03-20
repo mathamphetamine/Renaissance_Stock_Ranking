@@ -9,7 +9,14 @@ This is the main script that orchestrates the entire stock ranking process:
 5. Generate output files with results
 
 Usage:
-    python -m renaissance.cli.main
+    # Run directly using the scripts (recommended for most users)
+    python scripts/run_ranking.py [options]
+    
+    # Run as module (if package is installed)
+    python -m renaissance.cli.main [options]
+    
+    # Run as command-line tool (if package is installed)
+    renaissance-rank [options]
 """
 
 import os
