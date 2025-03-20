@@ -40,16 +40,29 @@ import os
 import sys
 import time
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("bloomberg_extractor.log"),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+def setup_logging(output_dir=None):
+    """Set up logging with appropriate handlers and directory structure."""
+    if output_dir is None:
+        output_dir = "output"
+    
+    # Create logs directory
+    logs_dir = os.path.join(output_dir, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    
+    # Set up log file path
+    log_file = os.path.join(logs_dir, "bloomberg_extractor.log")
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+    
+    return logging.getLogger(__name__)
 
 # Bloomberg API session parameters
 SESSION_OPTIONS = blpapi.SessionOptions()
@@ -220,6 +233,39 @@ def get_nifty500_constituents(test_mode=False):
             logger.info("Attempting to retrieve sector information for constituents")
             return get_sectors_for_constituents(df)
             
+        except blpapi.exception.NotFoundException as e:
+            logger.error(f"Bloomberg API Error (attempt {attempt}/{max_attempts}): Service or field not found: {str(e)}")
+            logger.error("This typically occurs when requested securities or fields are not available in your Bloomberg subscription.")
+            if attempt == max_attempts:
+                logger.error("Maximum number of attempts reached, giving up.")
+                raise Exception(f"Bloomberg API error: Service or field not found - {str(e)}")
+            else:
+                logger.info(f"Retrying in 5 seconds...")
+                time.sleep(5)
+                continue
+        
+        except blpapi.exception.InvalidArgumentException as e:
+            logger.error(f"Bloomberg API Error (attempt {attempt}/{max_attempts}): Invalid argument: {str(e)}")
+            logger.error("This typically occurs when there's an issue with the request format or parameters.")
+            if attempt == max_attempts:
+                logger.error("Maximum number of attempts reached, giving up.")
+                raise Exception(f"Bloomberg API error: Invalid argument - {str(e)}")
+            else:
+                logger.info(f"Retrying in 5 seconds...")
+                time.sleep(5)
+                continue
+        
+        except ConnectionError as e:
+            logger.error(f"Network Error (attempt {attempt}/{max_attempts}): {str(e)}")
+            logger.error("Please check your network connection and that Bloomberg Terminal is running.")
+            if attempt == max_attempts:
+                logger.error("Maximum number of attempts reached, giving up.")
+                raise Exception(f"Network error connecting to Bloomberg - {str(e)}")
+            else:
+                logger.info(f"Retrying in 5 seconds...")
+                time.sleep(5)
+                continue
+        
         except Exception as e:
             logger.error(f"Error in attempt {attempt}/{max_attempts}: {str(e)}")
             if attempt == max_attempts:
@@ -255,11 +301,13 @@ def get_sectors_for_constituents(constituents_df):
         session = blpapi.Session(SESSION_OPTIONS)
         if not session.start():
             logger.warning("Failed to start Bloomberg API session for sector data, proceeding without sectors")
+            logger.warning("Please verify that Bloomberg Terminal is running and you're logged in")
             return constituents_df
         
         if not session.openService("//blp/refdata"):
             session.stop()
             logger.warning("Failed to open //blp/refdata service for sector data, proceeding without sectors")
+            logger.warning("This could be due to network issues or Bloomberg service unavailability")
             return constituents_df
         
         refDataService = session.getService("//blp/refdata")
@@ -326,9 +374,25 @@ def get_sectors_for_constituents(constituents_df):
         logger.info(f"Added sector information to constituents data")
         return all_constituents
         
+    except blpapi.exception.NotFoundException as e:
+        logger.warning(f"Bloomberg API Error when retrieving sectors: Service or field not found: {str(e)}")
+        logger.warning("Proceeding without sector information")
+        return constituents_df
+    
+    except blpapi.exception.InvalidArgumentException as e:
+        logger.warning(f"Bloomberg API Error when retrieving sectors: Invalid argument: {str(e)}")
+        logger.warning("Proceeding without sector information")
+        return constituents_df
+    
+    except ConnectionError as e:
+        logger.warning(f"Network Error when retrieving sectors: {str(e)}")
+        logger.warning("Please check your network connection and that Bloomberg Terminal is running")
+        logger.warning("Proceeding without sector information")
+        return constituents_df
+        
     except Exception as e:
-        logger.error(f"Error getting sector information: {str(e)}")
-        # Return the original DataFrame if we can't get sectors
+        logger.warning(f"Error retrieving sector information: {str(e)}")
+        logger.warning("Proceeding without sector information")
         return constituents_df
 
 def get_historical_prices(isins, start_date, end_date, test_mode=False):
@@ -628,46 +692,61 @@ def get_additional_metrics(isins, test_mode=False):
         return pd.DataFrame({"ISIN": isins})
 
 def main():
-    """Main function to extract data from Bloomberg."""
+    """
+    Main entry point for the Bloomberg data extractor.
+    
+    This function orchestrates the entire data extraction process using Bloomberg API.
+    """
+    # Parse command line arguments
+    args = parse_arguments()
+    
+    # Ensure output directory exists
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    # Set up logging
+    logger = setup_logging(args.output_dir)
+    
+    logger.info("Starting Bloomberg data extraction")
+    
     try:
-        # Parse command line arguments
-        args = parse_arguments()
-        
         # Set default start and end dates if not provided
         end_date = datetime.datetime.now().date() if args.end_date is None else datetime.datetime.strptime(args.end_date, "%Y-%m-%d").date()
         start_date = end_date.replace(year=end_date.year - 15) if args.start_date is None else datetime.datetime.strptime(args.start_date, "%Y-%m-%d").date()
         
-        logger.info(f"Extracting data from Bloomberg")
         logger.info(f"Date range: {start_date} to {end_date}")
         logger.info(f"Output directory: {args.output_dir}")
         
         if args.test_mode:
             logger.info("Running in TEST MODE - no Bloomberg connection will be made")
-        
-        # Create output directory if it doesn't exist
-        os.makedirs(args.output_dir, exist_ok=True)
-        
+            
         # Get NIFTY 500 constituents
+        logger.info("Step 1: Extracting NIFTY 500 constituents")
         nifty500_df = get_nifty500_constituents(test_mode=args.test_mode)
         
-        # Save constituents to CSV
-        nifty500_file = os.path.join(args.output_dir, "nifty500_list.csv")
-        nifty500_df.to_csv(nifty500_file, index=False)
-        logger.info(f"Saved NIFTY 500 constituents to {nifty500_file}")
+        # Save the constituents list
+        constituents_file = os.path.join(args.output_dir, "nifty500_list.csv")
+        nifty500_df.to_csv(constituents_file, index=False)
+        logger.info(f"Saved NIFTY 500 list to {constituents_file}")
         
         # Get historical prices
-        prices_df = get_historical_prices(nifty500_df["ISIN"].tolist(), start_date, end_date, test_mode=args.test_mode)
+        logger.info("Step 2: Extracting historical prices")
+        prices_df = get_historical_prices(
+            nifty500_df["ISIN"].tolist(), 
+            start_date, 
+            end_date, 
+            test_mode=args.test_mode
+        )
         
         # Validate the extracted data
         validate_data(nifty500_df, prices_df)
         
-        # Save prices to CSV
+        # Save the prices
         prices_file = os.path.join(args.output_dir, "historical_prices.csv")
         prices_df.to_csv(prices_file, index=False)
         logger.info(f"Saved historical prices to {prices_file}")
         
-        # Get additional financial metrics if requested
-        # This is optional and won't affect the main functionality
+        # Get additional financial metrics
+        logger.info("Step 3: Extracting financial metrics")
         try:
             metrics_df = get_additional_metrics(nifty500_df["ISIN"].tolist(), test_mode=args.test_mode)
             if len(metrics_df.columns) > 1:  # If we have more than just ISIN column
@@ -678,18 +757,17 @@ def main():
             logger.warning(f"Could not retrieve additional financial metrics: {str(e)}")
             logger.info("Continuing without financial metrics")
         
-        logger.info("Data extraction completed successfully")
+        logger.info("Bloomberg data extraction completed successfully")
         logger.info(f"Summary:")
         logger.info(f"- NIFTY 500 constituents: {len(nifty500_df)} stocks")
         logger.info(f"- Historical prices: {len(prices_df)} records")
         logger.info(f"- Date range: {prices_df['Date'].min().strftime('%Y-%m-%d')} to {prices_df['Date'].max().strftime('%Y-%m-%d')}")
         logger.info(f"- Files saved to: {args.output_dir}")
-        
-    except Exception as e:
-        logger.error(f"Error extracting data: {str(e)}", exc_info=True)
-        return 1
+        return 0
     
-    return 0
+    except Exception as e:
+        logger.error(f"Error during Bloomberg data extraction: {str(e)}")
+        return 1
 
 if __name__ == "__main__":
     exit(main()) 

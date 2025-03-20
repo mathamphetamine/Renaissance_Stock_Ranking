@@ -7,6 +7,20 @@ allowing users to run the ranking system with a simple command.
 
 Usage:
     python scripts/run_ranking.py [options]
+
+Alternative Usage (CLI Tool):
+    renaissance-rank [options]
+
+Both methods provide identical functionality, using the same underlying code.
+The script approach is often more intuitive for new users, while the CLI tool
+is convenient for regular users and automated workflows.
+
+For detailed options, run:
+    python scripts/run_ranking.py --help
+    
+    or
+    
+    renaissance-rank --help
 """
 
 import sys

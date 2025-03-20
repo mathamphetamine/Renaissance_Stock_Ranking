@@ -32,7 +32,7 @@ def main():
             integrate_financial_metrics(data, args.output_dir)
         
         # Generate consolidated report
-        generate_sector_report(sector_stats, top_stocks, concentration, args.output_dir)
+        generate_sector_report(sector_stats, concentration, top_stocks, args.output_dir)
         
         print("\nSector analysis completed successfully.")
         print(f"Results saved to {args.output_dir}")

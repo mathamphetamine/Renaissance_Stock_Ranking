@@ -31,16 +31,29 @@ from renaissance.core.output_generator import (
     generate_summary_statistics
 )
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("ranking_system.log"),
-        logging.StreamHandler()
-    ]
-)
-logger = logging.getLogger(__name__)
+def setup_logging(output_dir=None):
+    """Set up logging with appropriate handlers and directory structure."""
+    if output_dir is None:
+        output_dir = "output"
+    
+    # Create logs directory
+    logs_dir = os.path.join(output_dir, "logs")
+    os.makedirs(logs_dir, exist_ok=True)
+    
+    # Set up log file path
+    log_file = os.path.join(logs_dir, "ranking_system.log")
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+    
+    return logging.getLogger(__name__)
 
 
 def parse_arguments():
@@ -150,16 +163,21 @@ def validate_input_data(nifty500_file: str, price_file: str) -> bool:
 
 
 def main():
-    """Main function to orchestrate the entire stock ranking process."""
+    """Main entry point for the Renaissance Stock Ranking System."""
+    args = parse_arguments()
+    
+    # Ensure output directory exists
+    os.makedirs(args.output_dir, exist_ok=True)
+    
+    # Set up logging
+    logger = setup_logging(args.output_dir)
+    
+    logger.info("Starting NIFTY 500 Stock Ranking System")
+    logger.info(f"NIFTY 500 constituents file: {args.nifty500_file}")
+    logger.info(f"Historical prices file: {args.price_file}")
+    logger.info(f"Output directory: {args.output_dir}")
+    
     try:
-        # Parse command line arguments
-        args = parse_arguments()
-        
-        logger.info("Starting NIFTY 500 Stock Ranking System")
-        logger.info(f"NIFTY 500 constituents file: {args.nifty500_file}")
-        logger.info(f"Historical prices file: {args.price_file}")
-        logger.info(f"Output directory: {args.output_dir}")
-        
         # Validate input data
         try:
             validate_input_data(args.nifty500_file, args.price_file)
@@ -210,9 +228,6 @@ def main():
         # 5. Generate output files
         logger.info("Step 5: Generating output files")
         try:
-            # Create the output directory if it doesn't exist
-            os.makedirs(args.output_dir, exist_ok=True)
-            
             # Generate output files
             generate_latest_rankings_output(
                 latest_rankings, latest_date, nifty500_df, args.output_dir

@@ -43,6 +43,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import glob
+import logging
 
 # Add the project root to the Python path to enable imports from the src directory
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -519,6 +520,71 @@ def analyze_sector_metrics(data, output_dir):
     
     return metrics_by_sector
 
+def integrate_financial_metrics(data: pd.DataFrame, output_dir: str) -> pd.DataFrame:
+    """
+    Analyze financial metrics by sector and create sector-level financial profiles.
+    
+    Args:
+        data (pd.DataFrame): Combined data with rankings and financial metrics
+        output_dir (str): Directory to save output files
+        
+    Returns:
+        pd.DataFrame: DataFrame with sector-level financial metrics
+    """
+    logger = logging.getLogger(__name__)
+    logger.info("Analyzing financial metrics by sector")
+    
+    try:
+        # Find financial metric columns (if any)
+        financial_cols = [col for col in data.columns if col.startswith(('PE_', 'PB_', 'ROE', 'Debt', 'Dividend'))]
+        
+        if not financial_cols:
+            logger.warning("No financial metric columns found in the data")
+            return pd.DataFrame()
+            
+        # Calculate sector-level financial metrics
+        sector_metrics = data.groupby('Sector')[financial_cols].agg(['mean', 'median', 'min', 'max', 'std']).reset_index()
+        
+        # Create a more readable format with MultiIndex columns flattened
+        sector_metrics_flat = pd.DataFrame()
+        sector_metrics_flat['Sector'] = sector_metrics['Sector']
+        
+        for metric in financial_cols:
+            for stat in ['mean', 'median', 'min', 'max', 'std']:
+                try:
+                    col_name = f"{metric}_{stat}"
+                    sector_metrics_flat[col_name] = sector_metrics[metric][stat]
+                except:
+                    # Handle potential missing metrics
+                    logger.warning(f"Could not process {metric} {stat}")
+        
+        # Save the results
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"sector_financial_metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+        sector_metrics_flat.to_csv(output_file, index=False)
+        logger.info(f"Saved sector financial metrics to {output_file}")
+        
+        # Create visualizations
+        plt.figure(figsize=(12, 8))
+        for i, metric in enumerate(financial_cols):
+            plt.subplot(2, (len(financial_cols) + 1) // 2, i + 1)
+            sns.barplot(x='Sector', y=f"{metric}_mean", data=sector_metrics_flat)
+            plt.title(f"Average {metric} by Sector")
+            plt.xticks(rotation=90)
+            plt.tight_layout()
+        
+        # Save visualization
+        chart_file = os.path.join(output_dir, f"sector_financial_metrics_chart_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
+        plt.savefig(chart_file, bbox_inches='tight')
+        plt.close()
+        logger.info(f"Saved sector financial metrics chart to {chart_file}")
+        
+        return sector_metrics_flat
+        
+    except Exception as e:
+        logger.error(f"Error analyzing financial metrics by sector: {str(e)}")
+        raise
+
 def generate_sector_report(sector_stats, concentration, metrics_by_sector, output_dir):
     """
     Generate a comprehensive sector analysis report with investment implications.
@@ -538,7 +604,7 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
     Args:
         sector_stats (pd.DataFrame): Sector performance statistics
         concentration (pd.DataFrame): Sector concentration metrics
-        metrics_by_sector (pd.DataFrame): Financial metrics by sector
+        metrics_by_sector (pd.DataFrame): Top stocks by sector
         output_dir (str): Directory where the report will be saved
     """
     print("\nGenerating sector analysis report...")

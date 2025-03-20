@@ -35,13 +35,17 @@ Dependencies: pandas, matplotlib, seaborn
 """
 
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
 import glob
 from datetime import datetime
 import sys
 import numpy as np
+
+# Set matplotlib backend for headless environments
+import matplotlib
+matplotlib.use('Agg')  # Set non-interactive backend
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -192,16 +196,17 @@ def create_visualizations():
     # 2. Top performers
     top10 = rankings.sort_values('YearlyReturn', ascending=False).head(10)
     plt.figure(figsize=(12, 8))
-    bars = sns.barplot(x='YearlyReturn', y='Name', data=top10, palette='viridis')
+    bars = sns.barplot(x='YearlyReturn', y='Name', hue='Name', data=top10, palette='viridis', legend=False)
     
-    # Add value labels to the bars
-    for i, v in enumerate(top10['YearlyReturn']):
-        bars.text(v + 1, i, f"{v:.2f}%", color='black', va='center')
+    for i, bar in enumerate(bars.patches):
+        value = top10.iloc[i]['YearlyReturn'] * 100
+        bars.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height()/2, f"{value:.1f}%", va='center')
     
-    plt.title('Top 10 Performers by Yearly Return', fontsize=16)
-    plt.xlabel('Yearly Return (%)', fontsize=14)
-    plt.ylabel('Company', fontsize=14)
-    plt.grid(axis='x', alpha=0.3)
+    plt.title(f"Top {len(top10)} Performing Stocks", fontsize=16)
+    plt.xlabel("Yearly Return", fontsize=12)
+    plt.ylabel("Stock", fontsize=12)
+    plt.axvline(x=0, color='gray', linestyle='--')
+    plt.grid(True, axis='x', alpha=0.3)
     plt.tight_layout()
     top_perf_file = os.path.join(viz_dir, f'top_performers_{timestamp}.png')
     plt.savefig(top_perf_file, dpi=300)
@@ -217,16 +222,17 @@ def create_visualizations():
     # 3. Bottom performers
     bottom10 = rankings.sort_values('YearlyReturn').head(10)
     plt.figure(figsize=(12, 8))
-    bars = sns.barplot(x='YearlyReturn', y='Name', data=bottom10, palette='viridis')
+    bars = sns.barplot(x='YearlyReturn', y='Name', hue='Name', data=bottom10, palette='viridis', legend=False)
     
-    # Add value labels to the bars
-    for i, v in enumerate(bottom10['YearlyReturn']):
-        bars.text(v - 1, i, f"{v:.2f}%", color='black', va='center', ha='right')
+    for i, bar in enumerate(bars.patches):
+        value = bottom10.iloc[i]['YearlyReturn'] * 100
+        bars.text(bar.get_width() + 0.01, bar.get_y() + bar.get_height()/2, f"{value:.1f}%", va='center')
     
-    plt.title('Bottom 10 Performers by Yearly Return', fontsize=16)
-    plt.xlabel('Yearly Return (%)', fontsize=14)
-    plt.ylabel('Company', fontsize=14)
-    plt.grid(axis='x', alpha=0.3)
+    plt.title(f"Bottom {len(bottom10)} Performing Stocks", fontsize=16)
+    plt.xlabel("Yearly Return", fontsize=12)
+    plt.ylabel("Stock", fontsize=12)
+    plt.axvline(x=0, color='gray', linestyle='--')
+    plt.grid(True, axis='x', alpha=0.3)
     plt.tight_layout()
     bottom_perf_file = os.path.join(viz_dir, f'bottom_performers_{timestamp}.png')
     plt.savefig(bottom_perf_file, dpi=300)
@@ -240,8 +246,8 @@ def create_visualizations():
     })
 
     # 4. Return vs Rank scatterplot
-    plt.figure(figsize=(12, 8))
-    scatter = sns.scatterplot(x='Rank', y='YearlyReturn', data=rankings, alpha=0.6, palette='viridis')
+    plt.figure(figsize=(10, 6))
+    scatter = sns.scatterplot(x='Rank', y='YearlyReturn', data=rankings, alpha=0.6)
     
     # Fit a trend line
     z = np.polyfit(rankings['Rank'], rankings['YearlyReturn'], 1)
@@ -292,16 +298,17 @@ def create_visualizations():
         # Top improvers (biggest negative rank delta)
         top_improvers = rank_delta.sort_values('RankDelta').head(10)
         plt.figure(figsize=(12, 8))
-        bars = sns.barplot(x='RankDelta', y='Name', data=top_improvers, palette='viridis')
+        bars = sns.barplot(x='RankDelta', y='Name', hue='Name', data=top_improvers, palette='viridis', legend=False)
         
-        # Add value labels
-        for i, v in enumerate(top_improvers['RankDelta']):
-            bars.text(v - 1, i, f"{v:.0f}", color='black', va='center', ha='right')
+        for i, bar in enumerate(bars.patches):
+            value = top_improvers.iloc[i]['RankDelta']
+            bars.text(bar.get_width() + 0.2, bar.get_y() + bar.get_height()/2, f"{int(value)}", va='center')
         
-        plt.title('Top 10 Rank Improvers (Positive Momentum)', fontsize=16)
-        plt.xlabel('Rank Delta (negative indicates improvement)', fontsize=14)
-        plt.ylabel('Company', fontsize=14)
-        plt.grid(axis='x', alpha=0.3)
+        plt.title(f"Top {len(top_improvers)} Stocks with Greatest Rank Improvement", fontsize=16)
+        plt.xlabel("Rank Change (- means improvement)", fontsize=12)
+        plt.ylabel("Stock", fontsize=12)
+        plt.axvline(x=0, color='gray', linestyle='--')
+        plt.grid(True, axis='x', alpha=0.3)
         plt.tight_layout()
         improvers_file = os.path.join(viz_dir, f'top_improvers_{timestamp}.png')
         plt.savefig(improvers_file, dpi=300)
@@ -317,16 +324,17 @@ def create_visualizations():
         # Biggest decliners (biggest positive rank delta)
         top_decliners = rank_delta.sort_values('RankDelta', ascending=False).head(10)
         plt.figure(figsize=(12, 8))
-        bars = sns.barplot(x='RankDelta', y='Name', data=top_decliners, palette='viridis')
+        bars = sns.barplot(x='RankDelta', y='Name', hue='Name', data=top_decliners, palette='viridis', legend=False)
         
-        # Add value labels
-        for i, v in enumerate(top_decliners['RankDelta']):
-            bars.text(v + 1, i, f"{v:.0f}", color='black', va='center')
+        for i, bar in enumerate(bars.patches):
+            value = top_decliners.iloc[i]['RankDelta']
+            bars.text(bar.get_width() + 0.2, bar.get_y() + bar.get_height()/2, f"{int(value)}", va='center')
         
-        plt.title('Top 10 Rank Decliners (Negative Momentum)', fontsize=16)
-        plt.xlabel('Rank Delta (positive indicates decline)', fontsize=14)
-        plt.ylabel('Company', fontsize=14)
-        plt.grid(axis='x', alpha=0.3)
+        plt.title(f"Top {len(top_decliners)} Stocks with Greatest Rank Decline", fontsize=16)
+        plt.xlabel("Rank Change (+ means decline)", fontsize=12)
+        plt.ylabel("Stock", fontsize=12)
+        plt.axvline(x=0, color='gray', linestyle='--')
+        plt.grid(True, axis='x', alpha=0.3)
         plt.tight_layout()
         decliners_file = os.path.join(viz_dir, f'top_decliners_{timestamp}.png')
         plt.savefig(decliners_file, dpi=300)
@@ -346,11 +354,11 @@ def create_visualizations():
     rankings['Quartile'] = pd.qcut(rankings['Rank'], 4, labels=quartile_labels)
     
     # Create boxplot
-    sns.boxplot(x='Quartile', y='YearlyReturn', data=rankings, palette='viridis')
-    plt.title('Return Distribution by Ranking Quartile', fontsize=16)
-    plt.xlabel('Ranking Group', fontsize=14)
-    plt.ylabel('Yearly Return (%)', fontsize=14)
-    plt.grid(axis='y', alpha=0.3)
+    sns.boxplot(x='Quartile', y='YearlyReturn', hue='Quartile', data=rankings, palette='viridis', legend=False)
+    plt.title("Return Distribution by Rank Quartile", fontsize=16)
+    plt.xlabel("Rank Quartile", fontsize=12)
+    plt.ylabel("Yearly Return", fontsize=12)
+    plt.grid(True, axis='y', alpha=0.3)
     plt.tight_layout()
     quartile_file = os.path.join(viz_dir, f'return_by_quartile_{timestamp}.png')
     plt.savefig(quartile_file, dpi=300)

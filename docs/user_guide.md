@@ -20,6 +20,8 @@ The Automated Stock Ranking System for Renaissance Investment Managers is design
 3. Rank stocks based on these returns
 4. Track month-over-month rank changes
 5. Generate easy-to-interpret output files with rankings and analysis
+6. Analyze sector performance and provide investment insights
+7. Create visualizations for better data understanding
 
 This replaces the previous manual process of collecting and analyzing this data in Excel spreadsheets.
 
@@ -63,6 +65,7 @@ The system works like an assembly line:
 ### System Requirements
 - Python 3.8 or higher
 - Bloomberg Terminal access (for data extraction only)
+- Bloomberg Desktop API (for automated data extraction)
 - Operating System: Windows, macOS, or Linux
 - RAM: 4GB minimum (8GB recommended for large datasets)
 - Disk Space: 1GB for installation and data
@@ -71,35 +74,39 @@ The system works like an assembly line:
 
 1. **Clone or download the repository**
    ```bash
-   git clone https://github.com/YourUsername/Renaissance_Stock_Ranking.git
+   git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
    cd Renaissance_Stock_Ranking
    ```
 
-2. **Create a virtual environment**
+2. **Use the installation scripts (Recommended)**
    ```bash
    # On Windows
-   python -m venv venv
-   venv\Scripts\activate
-
+   install.bat
+   
    # On macOS/Linux
-   python -m venv venv
-   source venv/bin/activate
+   ./install.sh
    ```
+   
+   These scripts will:
+   - Create a virtual environment
+   - Install all required dependencies
+   - Install the package in development mode
+   - Make scripts executable
 
-3. **Install dependencies**
+3. **Verify installation**
    ```bash
-   pip install -r requirements.txt
+   # Activate your virtual environment first
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   
+   # Test the installation
+   renaissance-rank --test-mode
    ```
-
-4. **Verify installation**
-   ```bash
-   python -m unittest discover tests
-   ```
-   All tests should pass, indicating that the system is properly installed.
+   
+   This should run successfully and indicate that the system is properly installed.
 
 ## Data Requirements
 
-The system requires two primary CSV files:
+The system requires two primary CSV files and one optional file:
 
 ### 1. NIFTY 500 Constituent List (`nifty500_list.csv`)
 
@@ -107,13 +114,14 @@ The system requires two primary CSV files:
 - `ISIN`: The International Securities Identification Number (primary identifier)
 - `Name`: The company name
 - `Ticker`: The Bloomberg ticker (optional but recommended)
+- `Sector`: The sector classification (optional, improves analysis)
 
 **Example format:**
 ```
-ISIN,Name,Ticker
-INE009A01021,Infosys Ltd,INFO:IN
-INE062A01020,Tata Consultancy Services Ltd,TCS:IN
-INE040A01034,HDFC Bank Ltd,HDFCB:IN
+ISIN,Name,Ticker,Sector
+INE009A01021,Infosys Ltd,INFO:IN,Information Technology
+INE062A01020,Tata Consultancy Services Ltd,TCS:IN,Information Technology
+INE040A01034,HDFC Bank Ltd,HDFCB:IN,Financials
 ```
 
 ### 2. Historical Prices (`historical_prices.csv`)
@@ -131,6 +139,23 @@ INE009A01021,2022-02-28,1722.30
 INE062A01020,2022-01-31,3698.15
 ```
 
+### 3. Financial Metrics (`financial_metrics.csv`) - Optional
+
+**Columns:**
+- `ISIN`: The International Securities Identification Number
+- `PE_Ratio`: Price-to-earnings ratio
+- `PB_Ratio`: Price-to-book ratio
+- `ROE`: Return on equity
+- `DebtToAsset`: Debt-to-asset ratio
+- `DividendYield`: Dividend yield
+
+**Example format:**
+```
+ISIN,PE_Ratio,PB_Ratio,ROE,DebtToAsset,DividendYield
+INE009A01021,28.5,3.2,25.4,0.12,1.5
+INE062A01020,30.2,12.5,42.8,0.05,1.2
+```
+
 **Important notes:**
 - Prices should be month-end closing prices
 - Prices must be adjusted for corporate actions (splits, dividends, etc.)
@@ -140,46 +165,96 @@ INE062A01020,2022-01-31,3698.15
 
 ## Using the System
 
-### Basic Usage
+### Data Collection Options
 
-1. **Extract data from Bloomberg Terminal**
-   - See the [Data Extraction Guide](data_extraction_guide.md) for detailed instructions
-   - Save the extracted data as CSV files in the required format
+#### Option 1: Automated Bloomberg API Extraction (Recommended)
 
-2. **Place data files in the correct location**
-   - Put `nifty500_list.csv` in the `data/` directory
-   - Put `historical_prices.csv` in the `data/` directory
+If you have Bloomberg Terminal access with the Bloomberg Desktop API installed:
 
-3. **Run the system**
-   ```bash
-   python src/main.py
-   ```
-
-4. **Check the output**
-   - Output files will be created in the `output/` directory
-   - See [Interpreting Results](#interpreting-results) for details
-
-### Advanced Usage
-
-**Custom file paths:**
 ```bash
-python src/main.py --nifty500-file path/to/nifty500_list.csv --price-file path/to/historical_prices.csv
+# Extract all necessary data using the Bloomberg API
+python scripts/extract_bloomberg.py
 ```
 
-**Custom output directory:**
+This will:
+- Extract the NIFTY 500 constituent list with sector information
+- Retrieve historical prices with corporate action adjustments
+- Collect financial metrics for deeper analysis
+- Save all files in the required format
+
+For detailed setup instructions, see the [Bloomberg API Guide](bloomberg_api_guide.md).
+
+#### Option 2: Manual Bloomberg Data Extraction
+
+Follow the [Data Extraction Guide](data_extraction_guide.md) to manually:
+1. Extract the NIFTY 500 constituent list from Bloomberg
+2. Extract historical monthly prices
+3. Optionally extract financial metrics
+4. Save them as CSV files in the data directory
+
+#### Option 3: Use Sample Data (For Testing)
+
 ```bash
-python src/main.py --output-dir path/to/output_directory
+# Copy sample data to the data directory
+cp data/sample/* data/
 ```
 
-**Generate historical rankings file:**
+### Running the Core Ranking System
+
 ```bash
-python src/main.py --generate-historical
+# Using the script interface
+python scripts/run_ranking.py
+
+# Or using the CLI tool
+renaissance-rank
 ```
 
-**Running with all options:**
+Command-line options:
 ```bash
-python src/main.py --nifty500-file data/custom_nifty500_list.csv --price-file data/custom_prices.csv --output-dir custom_output --generate-historical
+# Custom file paths
+python scripts/run_ranking.py --nifty500-file path/to/nifty500_list.csv --price-file path/to/historical_prices.csv
+
+# Custom output directory
+python scripts/run_ranking.py --output-dir path/to/output_directory
+
+# Generate historical rankings file
+python scripts/run_ranking.py --generate-historical
 ```
+
+### Generating Visualizations
+
+```bash
+# Using the script interface
+python scripts/visualize_results.py
+
+# Or using the CLI tool
+renaissance-visualize
+```
+
+This creates multiple visualizations in the `output/visualizations/` directory:
+- Return distribution charts
+- Top and bottom performers
+- Rank change distribution
+- Return vs. rank scatter plots
+- And more
+
+An HTML index file is also created for easy navigation of all visualizations.
+
+### Performing Sector Analysis
+
+```bash
+# Using the script interface
+python scripts/analyze_sectors.py
+
+# Or using the CLI tool
+renaissance-analyze
+```
+
+This generates sector-level analysis in the `output/sector_analysis/` directory:
+- Sector performance rankings
+- Top stocks by sector
+- Sector concentration metrics
+- Investment recommendations
 
 ## Interpreting Results
 
@@ -217,9 +292,21 @@ This file provides overall statistics about the analysis:
 - Return statistics (average, min, max)
 - Ranking statistics (volatility, average movement)
 
-### 4. Historical Rankings File (Optional)
+### 4. Visualization Files
 
-If generated using the `--generate-historical` flag, this file contains all historical rankings for all stocks over the entire time period.
+The system generates various charts and graphs in the `output/visualizations/` directory:
+- Return distribution charts showing the spread of returns
+- Top and bottom performers charts highlighting the best and worst stocks
+- Rank change distribution showing how ranks have shifted
+- Sector performance visualizations if sector data is available
+- HTML index file for easy navigation
+
+### 5. Sector Analysis Files
+
+If sector information is available:
+- `sector_performance.csv`: Overall sector performance metrics
+- `top_stocks_by_sector.csv`: Best-performing stocks in each sector
+- `sector_concentration.csv`: Metrics on sector weighting and concentration
 
 ## Extending the System
 
@@ -229,25 +316,25 @@ The system is designed to be modular and extensible. Here are some ways you can 
 
 To add new metrics (e.g., risk-adjusted returns):
 
-1. Create a new module in the `src/` directory
+1. Create a new module in the `renaissance/analysis/` directory
 2. Implement the calculation logic
-3. Update `main.py` to include the new module
+3. Update the CLI modules to include the new functionality
 4. Update output generation to include the new metrics
 
 ### Customizing the Ranking Algorithm
 
 The current system ranks stocks based solely on yearly returns. To modify the ranking criteria:
 
-1. Edit `src/ranking_system.py`
+1. Edit `renaissance/core/ranking_system.py`
 2. Modify the `rank_stocks_by_return` function to use different or multiple criteria
 
 ### Supporting Different Data Sources
 
 To support data from sources other than Bloomberg:
 
-1. Create a new loader in `src/data_loader.py` or a new file
+1. Create a new loader in `renaissance/data_extraction/` directory
 2. Implement the logic to convert the data to the format expected by the system
-3. Update `main.py` to use the new loader
+3. Update the CLI modules to use the new loader
 
 ## Troubleshooting
 
@@ -255,7 +342,7 @@ To support data from sources other than Bloomberg:
 
 #### File Not Found Errors
 ```
-FileNotFoundError: NIFTY 500 ISIN list file not found: ../data/nifty500_list.csv
+FileNotFoundError: NIFTY 500 ISIN list file not found: data/nifty500_list.csv
 ```
 
 **Solution**: Ensure the data files are in the correct location. If using custom paths, verify they are correct.
@@ -281,16 +368,23 @@ Warning: Calculated returns span only 6 months, which is less than a year
 
 **Solution**: Ensure you have at least 13 months of price data to calculate 12-month returns.
 
-#### No Returns Calculated
+#### Bloomberg API Connection Issues
 ```
-Error calculating yearly returns: Cannot calculate return - no prior price found
+Failed to start Bloomberg API session
 ```
 
-**Solution**: Verify that your price data has sufficient history (at least 12 months) for each stock.
+**Solution**:
+- Ensure the Bloomberg Terminal is running and logged in
+- Verify that the Bloomberg Desktop API is installed
+- Check your network connection to the Bloomberg service
 
 ### Log Files
 
-The system generates a log file (`ranking_system.log`) that contains detailed information about the execution. Check this file for error messages and warnings.
+The system generates log files that contain detailed information about the execution:
+- `ranking_system.log`: Main ranking system log
+- `bloomberg_extractor.log`: Bloomberg API extraction log
+
+Check these files for error messages and warnings.
 
 ### Getting Help
 
@@ -299,27 +393,40 @@ If you encounter issues that are not covered in this guide:
 1. Check the logs for detailed error messages
 2. Verify that your data files match the required format
 3. Run the tests to verify the installation
-4. Contact the system developer for assistance
+4. See the specialized guides:
+   - [Bloomberg API Guide](bloomberg_api_guide.md)
+   - [Data Extraction Guide](data_extraction_guide.md)
+   - [Sector Analysis Guide](README_sector_analysis.md)
 
 ---
 
 ## Quick Reference
 
-### Command-Line Arguments
+### Command-Line Tools
 
-| Argument | Description | Default |
-|----------|-------------|---------|
-| `--nifty500-file` | Path to NIFTY 500 constituent list | `../data/nifty500_list.csv` |
-| `--price-file` | Path to historical prices file | `../data/historical_prices.csv` |
-| `--output-dir` | Directory for output files | `../output/` |
-| `--generate-historical` | Generate historical rankings output | Not set (False) |
+| Tool | Description | Example |
+|------|-------------|---------|
+| `renaissance-rank` | Run the ranking system | `renaissance-rank --output-dir output` |
+| `renaissance-visualize` | Generate visualizations | `renaissance-visualize` |
+| `renaissance-analyze` | Analyze sectors | `renaissance-analyze` |
+| `renaissance-extract` | Extract Bloomberg data | `renaissance-extract --test-mode` |
+
+### Script Interfaces
+
+| Script | Description | Example |
+|--------|-------------|---------|
+| `scripts/run_ranking.py` | Run the ranking system | `python scripts/run_ranking.py` |
+| `scripts/visualize_results.py` | Generate visualizations | `python scripts/visualize_results.py` |
+| `scripts/analyze_sectors.py` | Analyze sectors | `python scripts/analyze_sectors.py` |
+| `scripts/extract_bloomberg.py` | Extract Bloomberg data | `python scripts/extract_bloomberg.py` |
 
 ### Required Data Columns
 
 | File | Required Columns |
 |------|------------------|
-| NIFTY 500 List | ISIN, Name |
+| NIFTY 500 List | ISIN, Name (Sector recommended) |
 | Historical Prices | ISIN, Date, Price |
+| Financial Metrics | ISIN, plus any metrics |
 
 ### Output Files
 
@@ -328,4 +435,5 @@ If you encounter issues that are not covered in this guide:
 | `NIFTY500_Rankings_YYYYMMDD.csv` | Latest month's rankings |
 | `NIFTY500_RankDelta_YYYYMMDD.csv` | Rank changes from previous month |
 | `NIFTY500_Ranking_Summary_YYYYMMDD_HHMMSS.txt` | Summary statistics |
-| `NIFTY500_Historical_Rankings_YYYYMMDD_HHMMSS.csv` | (Optional) All historical rankings | 
+| Visualization files | Charts and graphs in `output/visualizations/` |
+| Sector analysis files | Sector insights in `output/sector_analysis/` | 

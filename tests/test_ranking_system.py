@@ -15,10 +15,10 @@ from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import modules from the project
-from src.data_loader import load_and_prepare_all_data
-from src.return_calculator import calculate_yearly_returns
-from src.ranking_system import rank_stocks_by_return
-from src.rank_delta_calculator import calculate_rank_delta
+from renaissance.core.data_loader import load_and_prepare_all_data
+from renaissance.core.return_calculator import calculate_yearly_returns
+from renaissance.core.ranking_system import rank_stocks_by_return
+from renaissance.core.rank_delta_calculator import calculate_rank_delta
 
 
 class TestRankingSystem(unittest.TestCase):
