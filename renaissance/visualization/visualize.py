@@ -47,9 +47,6 @@ matplotlib.use('Agg')  # Set non-interactive backend
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Add the project root to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 def get_latest_file(pattern):
     """
     Find the most recent file matching a pattern.
@@ -392,14 +389,22 @@ def create_visualizations():
     print(f"A detailed visualization guide has been created at '{viz_dir}/visualization_index_{timestamp}.html'")
     print("Open this HTML file in any web browser to view all charts with explanations.")
 
-if __name__ == "__main__":
+def main():
     print("Renaissance Stock Ranking System - Visualization Tool")
     print("====================================================")
     print("Creating visualizations from the latest ranking data...")
     print("This may take a moment depending on the size of your data.")
     print("")
-    create_visualizations()
-    print("")
-    print("Visualization process complete! You can now explore the results.")
-    print("For non-technical users: Open the HTML file in the 'output/visualizations' folder")
-    print("for an easy-to-understand guide to all the charts.") 
+    try:
+        create_visualizations()
+        print("")
+        print("Visualization process complete! You can now explore the results.")
+        print("For non-technical users: Open the HTML file in the 'output/visualizations' folder")
+        print("for an easy-to-understand guide to all the charts.")
+        return 0
+    except Exception as e:
+        print(f"Error during visualization: {str(e)}")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main()) 

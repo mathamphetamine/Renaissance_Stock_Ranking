@@ -742,10 +742,57 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+#### Problem: Bloomberg API installation fails
+**Solution**: The Bloomberg API requires a special installation process:
+```bash
+# Install the core package first
+pip install -e .
+
+# Then install Bloomberg API from Bloomberg's own index
+pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+```
+
+Alternatively, you can use our extras feature:
+```bash
+# Install with the notebook and visualization extras (without Bloomberg)
+pip install -e ".[notebook,viz]"
+
+# Then separately install Bloomberg API as shown above
+```
+
 #### Problem: "Module not found" errors
-**Solution**: Make sure you've installed in development mode:
+**Solution**: Make sure you've installed the package properly:
+```bash
+# Basic installation
+pip install -e .
+
+# Or with the appropriate extras
+pip install -e ".[bloomberg,notebook,viz,test]"
+```
+
+### Running Scripts Issues
+
+#### Problem: Import errors when running scripts directly
+**Solution**: The scripts are now designed to be run through the package. Use one of these methods:
+
+1. Install the package first, then run the scripts:
 ```bash
 pip install -e .
+python scripts/run_ranking.py
+```
+
+2. Use the Python module syntax:
+```bash
+python -m renaissance.cli.main
+python -m renaissance.cli.analyze
+```
+
+3. Use the console entry points (after installation):
+```bash
+renaissance-rank
+renaissance-analyze
+renaissance-visualize
+renaissance-extract
 ```
 
 ### Data Issues

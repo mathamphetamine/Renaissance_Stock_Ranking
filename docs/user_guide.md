@@ -70,7 +70,25 @@ The system works like an assembly line:
 - RAM: 4GB minimum (8GB recommended for large datasets)
 - Disk Space: 1GB for installation and data
 
-### Installation Steps
+### Installation Options
+
+#### Option 1: Using the Installation Scripts (Recommended for Non-Technical Users)
+
+```bash
+# On Windows
+install.bat
+
+# On macOS/Linux
+./install.sh
+```
+
+These scripts will:
+- Create a virtual environment
+- Install all required dependencies
+- Install the package in development mode
+- Make scripts executable
+
+#### Option 2: Manual Installation (For Technical Users)
 
 1. **Clone or download the repository**
    ```bash
@@ -78,31 +96,119 @@ The system works like an assembly line:
    cd Renaissance_Stock_Ranking
    ```
 
-2. **Use the installation scripts (Recommended)**
+2. **Create and activate a virtual environment**
    ```bash
-   # On Windows
-   install.bat
+   # Create virtual environment
+   python -m venv venv
    
-   # On macOS/Linux
-   ./install.sh
+   # Activate it (different command based on OS)
+   # On Windows:
+   venv\Scripts\activate
+   
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install the package with required dependencies**
+
+   Basic installation:
+   ```bash
+   pip install -e .
    ```
    
-   These scripts will:
-   - Create a virtual environment
-   - Install all required dependencies
-   - Install the package in development mode
-   - Make scripts executable
+   Installation with optional components:
+   ```bash
+   # For notebook/visualization capabilities
+   pip install -e ".[notebook,viz]"
+   
+   # For testing tools
+   pip install -e ".[test]"
+   
+   # For all components except Bloomberg
+   pip install -e ".[notebook,viz,test]"
+   ```
+
+4. **Installing Bloomberg API (if required)**
+   
+   The Bloomberg API must be installed separately from Bloomberg's servers:
+   ```bash
+   pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+   ```
 
 3. **Verify installation**
    ```bash
-   # Activate your virtual environment first
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   # Ensure your virtual environment is activated
    
-   # Test the installation
-   renaissance-rank --test-mode
+   # Test the installation using the CLI tool
+   renaissance-rank --help
    ```
-   
-   This should run successfully and indicate that the system is properly installed.
+
+## Running the System
+
+You can run the system in several ways, depending on your preference:
+
+### Method 1: Using Convenience Scripts (Recommended for Non-Technical Users)
+
+These scripts provide an easy way to run the system:
+
+```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
+python scripts/run_ranking.py
+
+# Run sector analysis
+python scripts/analyze_sectors.py
+
+# Generate visualizations
+python scripts/visualize_results.py
+
+# Extract data from Bloomberg
+python scripts/extract_bloomberg.py
+```
+
+### Method 2: Using Command-Line Tools (After Installation)
+
+If you've installed the package, you can use the provided command-line tools:
+
+```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
+renaissance-rank
+
+# Run sector analysis
+renaissance-analyze
+
+# Generate visualizations
+renaissance-visualize
+
+# Extract data from Bloomberg
+renaissance-extract
+```
+
+### Method 3: Using Python Module Syntax (For Advanced Users)
+
+You can also run the system modules directly:
+
+```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
+python -m renaissance.cli.main
+
+# Run sector analysis
+python -m renaissance.cli.analyze
+
+# Generate visualizations
+python -m renaissance.cli.visualize
+
+# Extract data from Bloomberg
+python -m renaissance.cli.extract
+```
 
 ## Data Requirements
 

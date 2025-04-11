@@ -47,21 +47,39 @@ Before you can use the Bloomberg API integration, you need:
 5. During installation, when prompted, select "typical" installation
 6. Verify installation by checking for the "Bloomberg" service in your system services
 
-### Step 3: Install the Bloomberg Python API
+### Step 3: Install the Renaissance Stock Ranking System and Bloomberg Python API
 
-After installing the Bloomberg Desktop API, you need to install the Python API package:
+#### 3.1 Install Our Package First
 
 ```bash
-# Option 1: Install directly from Bloomberg's servers (preferred)
-pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Option 2: If option 1 fails, download manually from the Terminal
-# 1. Type WAPI <GO> in your Bloomberg Terminal
-# 2. Navigate to "API Libraries and Documentation" > "Python API"
-# 3. Download the appropriate package for your Python version
-# 4. Install the downloaded package with pip
-pip install C:\path\to\downloaded\blpapi-3.19.3.tar.gz
+# Install the Renaissance Stock Ranking System
+pip install -e .
 ```
+
+#### 3.2 Install the Bloomberg Python API
+
+After installing our package, you need to install the Bloomberg Python API:
+
+```bash
+# Install directly from Bloomberg's servers
+pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+```
+
+Alternatively, if you want to install other optional components as well:
+
+```bash
+# Install the package with visualization and notebook support
+pip install -e ".[viz,notebook]"
+
+# Then install the Bloomberg API separately (it can't be included directly)
+pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+```
+
+> **Note:** We cannot include the Bloomberg API as a standard dependency in our package because it must be installed from Bloomberg's servers rather than PyPI. This is why it needs to be installed separately.
 
 ### Step 4: Verify Your Installation
 
@@ -134,43 +152,77 @@ Our system extracts three types of data from Bloomberg:
 
 ### Step 3: Run the Bloomberg Extractor
 
+There are multiple ways to run the Bloomberg data extractor:
+
 #### Option A: Using the Command Line Interface
 
 ```bash
 # Activate your virtual environment first
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Basic usage (extracts data for the last 15 years)
+# Method 1: Using the convenience script
 python scripts/extract_bloomberg.py
 
+# Method 2: Using the installed CLI tool
+renaissance-extract
+
+# Method 3: Using Python module syntax
+python -m renaissance.cli.extract
+```
+
+All methods support the same command-line options:
+
+```bash
 # Customize the date range
-python scripts/extract_bloomberg.py --start-date 2018-01-01 --end-date 2023-12-31
+renaissance-extract --start-date 2018-01-01 --end-date 2023-12-31
 
 # Specify a different output directory
-python scripts/extract_bloomberg.py --output-dir custom_data_folder
+renaissance-extract --output-dir custom_data_folder
 
 # Run in test mode (no Bloomberg connection needed)
-python scripts/extract_bloomberg.py --test-mode
+renaissance-extract --test-mode
 ```
 
 #### Option B: Using the Python API in Your Own Scripts
 
 ```python
-from renaissance.data_extraction.bloomberg_data_extractor import get_nifty500_constituents, get_historical_prices, get_additional_metrics
+from renaissance.data_extraction.bloomberg_data_extractor import main as extractor_main
+import sys
+
+# Run the extractor with custom arguments
+sys.argv = [
+    'extractor',  # Program name (not used)
+    '--start-date', '2018-01-01',
+    '--end-date', '2023-12-31',
+    '--output-dir', 'custom_data_folder'
+]
+extractor_main()
+```
+
+Or if you need more control over individual steps:
+
+```python
+from renaissance.data_extraction.bloomberg_data_extractor import (
+    get_nifty500_constituents, 
+    get_historical_prices, 
+    get_additional_metrics
+)
 import datetime
+import os
 
 # Get NIFTY 500 constituents
 constituents_df = get_nifty500_constituents()
 
-# Define date range
-end_date = datetime.datetime.now().date()
-start_date = end_date.replace(year=end_date.year - 5)  # Last 5 years
-
 # Get historical prices
+start_date = datetime.datetime(2018, 1, 1).date()
+end_date = datetime.datetime.now().date()
 prices_df = get_historical_prices(constituents_df["ISIN"].tolist(), start_date, end_date)
 
 # Get financial metrics (optional)
 metrics_df = get_additional_metrics(constituents_df["ISIN"].tolist())
+
+# Create output directory if it doesn't exist
+os.makedirs("data", exist_ok=True)
 
 # Save data to files
 constituents_df.to_csv("data/nifty500_list.csv", index=False)

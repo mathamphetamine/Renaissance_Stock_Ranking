@@ -394,10 +394,36 @@ If you follow this visual guide, you'll have the data in the perfect format for 
 
 ## Next Steps
 
-After successfully extracting and formatting all the required data files, place them in the `data/` directory of your Renaissance Stock Ranking System installation, and you're ready to run the ranking process using:
+After successfully extracting and formatting all the required data files, place them in the `data/` directory of your Renaissance Stock Ranking System installation. You can then run the ranking process using one of the following methods:
+
+### Method 1: Using the Convenience Script (Recommended for Non-Technical Users)
 
 ```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
 python scripts/run_ranking.py
+```
+
+### Method 2: Using the Command-Line Tool (After Installation)
+
+```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
+renaissance-rank
+```
+
+### Method 3: Using Python Module Syntax (For Advanced Users)
+
+```bash
+# Activate your virtual environment first
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Run the ranking system
+python -m renaissance.cli.main
 ```
 
 For automated data extraction, see the [Bloomberg API Guide](bloomberg_api_guide.md).

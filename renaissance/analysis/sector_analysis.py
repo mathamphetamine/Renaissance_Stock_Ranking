@@ -45,9 +45,6 @@ from datetime import datetime
 import glob
 import logging
 
-# Add the project root to the Python path to enable imports from the src directory
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 def parse_arguments():
     """
     Parse command line arguments for the sector analysis script.
@@ -454,72 +451,6 @@ def analyze_sector_concentration(data, output_dir):
     
     return concentration
 
-def analyze_sector_metrics(data, output_dir):
-    """
-    Analyze financial metrics by sector.
-    
-    This function calculates average financial metrics (P/E, P/B, ROE, etc.) for
-    each sector, providing insights into relative valuations and financial health
-    across sectors. This is particularly valuable for identifying value opportunities
-    or determining whether a sector's performance is justified by fundamentals.
-    
-    The function:
-    1. Calculates average financial metrics for each sector
-    2. Creates visualizations of key metrics by sector
-    3. Saves results to CSV and image files
-    
-    Args:
-        data (pd.DataFrame): Merged data containing rankings, sectors, and financial metrics
-        output_dir (str): Directory where output files will be saved
-    
-    Returns:
-        pd.DataFrame or None: DataFrame with sector financial metrics (average values),
-                             or None if metrics are unavailable
-    
-    Note:
-        This analysis is skipped if financial metrics are not available in the data.
-        These metrics are typically provided by the Bloomberg API extractor.
-    """
-    print("\nAnalyzing financial metrics by sector...")
-    
-    # Check if we have financial metrics in the data
-    metrics_cols = [col for col in data.columns if col in ['PE_Ratio', 'PB_Ratio', 'ROE', 'DebtToAsset', 'DividendYield']]
-    
-    # Skip this analysis if no metrics are available
-    if not metrics_cols:
-        print("No financial metrics available. Skipping sector metrics analysis.")
-        return None
-    
-    # Calculate mean metrics by sector
-    metrics_by_sector = data.groupby('Sector')[metrics_cols].mean()
-    
-    # Save metrics to CSV
-    metrics_by_sector.to_csv(f"{output_dir}/sector_metrics.csv")
-    print(f"Sector financial metrics saved to {output_dir}/sector_metrics.csv")
-    
-    # Create visualizations of metrics by sector
-    n_metrics = len(metrics_cols)
-    fig, axes = plt.subplots(n_metrics, 1, figsize=(12, n_metrics * 4))
-    
-    # Handle the case where there's only one metric
-    if n_metrics == 1:
-        axes = [axes]
-    
-    # Create a bar chart for each metric
-    for i, metric in enumerate(metrics_cols):
-        # Sort sectors by this specific metric for better visualization
-        sorted_metrics = metrics_by_sector.sort_values(metric)
-        
-        # Plot horizontal bar chart
-        sorted_metrics[metric].plot(kind='barh', ax=axes[i])
-        axes[i].set_title(f'{metric} by Sector', fontsize=12)
-        axes[i].grid(axis='x', alpha=0.3)
-    
-    plt.tight_layout()
-    plt.savefig(f"{output_dir}/sector_metrics.png", dpi=300)
-    
-    return metrics_by_sector
-
 def integrate_financial_metrics(data: pd.DataFrame, output_dir: str) -> pd.DataFrame:
     """
     Analyze financial metrics by sector and create sector-level financial profiles.
@@ -604,7 +535,7 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
     Args:
         sector_stats (pd.DataFrame): Sector performance statistics
         concentration (pd.DataFrame): Sector concentration metrics
-        metrics_by_sector (pd.DataFrame): Top stocks by sector
+        metrics_by_sector (pd.DataFrame or None): Flattened DataFrame with sector financial metrics (output of integrate_financial_metrics), or None.
         output_dir (str): Directory where the report will be saved
     """
     print("\nGenerating sector analysis report...")
@@ -644,51 +575,100 @@ def generate_sector_report(sector_stats, concentration, metrics_by_sector, outpu
             f.write(f"{i+1}. {sector}: {value:.1f}% of total returns\n")
         
         # Section 3: Financial Metrics by Sector (if available)
-        if metrics_by_sector is not None:
-            f.write("\n\n3. Financial Metrics by Sector\n")
-            f.write("------------------------------\n\n")
-            
-            metrics_cols = metrics_by_sector.columns
-            
-            # For each metric, show highest, lowest, and average values
-            for metric in metrics_cols:
-                f.write(f"\n{metric}:\n")
-                f.write(f"  Highest: {metrics_by_sector[metric].idxmax()} ({metrics_by_sector[metric].max():.2f})\n")
-                f.write(f"  Lowest: {metrics_by_sector[metric].idxmin()} ({metrics_by_sector[metric].min():.2f})\n")
-                f.write(f"  Average across all sectors: {metrics_by_sector[metric].mean():.2f}\n")
-        
+        f.write("\n\n3. Financial Metrics by Sector\n")
+        f.write("------------------------------\n\n")
+        if metrics_by_sector is not None and not metrics_by_sector.empty:
+            # Identify the base metric names from columns like 'PE_Ratio_mean', 'PB_Ratio_std', etc.
+            # Use mean columns for reporting highest/lowest/average
+            base_metrics = sorted(list(set([col.split('_')[0] for col in metrics_by_sector.columns if '_' in col and col != 'Sector'])))
+
+            for metric in base_metrics:
+                mean_col = f"{metric}_mean"
+                if mean_col in metrics_by_sector.columns:
+                    # Create a temporary series (indexed by Sector) for easier idxmax/idxmin/mean calculation
+                    mean_series = metrics_by_sector.set_index('Sector')[mean_col].dropna()
+                    if not mean_series.empty:
+                        f.write(f"\n{metric} (Mean):\n")
+                        highest_sector = mean_series.idxmax()
+                        highest_value = mean_series.max()
+                        lowest_sector = mean_series.idxmin()
+                        lowest_value = mean_series.min()
+                        average_value = mean_series.mean()
+
+                        f.write(f"  Highest: {highest_sector} ({highest_value:.2f})\n")
+                        f.write(f"  Lowest: {lowest_sector} ({lowest_value:.2f})\n")
+                        f.write(f"  Average across all sectors: {average_value:.2f}\n")
+                    else:
+                         f.write(f"\n{metric} (Mean): Not available or all NaN.\n")
+
+                else:
+                    # This case should ideally not happen if integrate_financial_metrics ran correctly
+                     f.write(f"\n{metric} (Mean): Mean column '{mean_col}' not found.\n")
+
+        else: # Handle case where metrics_by_sector is None or empty
+            f.write("Financial metrics data was not available for this analysis.\n")
+
         # Section 4: Investment Implications
         f.write("\n\n4. Investment Implications\n")
         f.write("---------------------------\n\n")
         f.write("Based on the sector analysis, consider the following investment strategies:\n\n")
-        
-        # Generate investment strategy suggestions based on the analysis
-        if metrics_by_sector is not None and 'PE_Ratio' in metrics_by_sector.columns:
-            # Identify value opportunities (high returns + low PE)
-            top_return_sectors = set(sector_stats.head(5).index)
-            low_pe_sectors = set(metrics_by_sector.sort_values('PE_Ratio').head(5).index)
-            value_sectors = top_return_sectors.intersection(low_pe_sectors)
-            
-            if value_sectors:
-                f.write("a) Value Opportunity Sectors (high returns with lower valuations):\n")
-                for sector in value_sectors:
-                    f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% return, " + 
-                           f"PE: {metrics_by_sector.loc[sector, 'PE_Ratio']:.2f}\n")
-            
-            # High growth sectors (regardless of valuation)
+
+        # Check if metrics data is available for implications
+        if metrics_by_sector is not None and not metrics_by_sector.empty:
+            pe_mean_col = 'PE_Ratio_mean' # Define the column name for mean P/E
+            if pe_mean_col in metrics_by_sector.columns:
+                # Identify value opportunities (high returns + low PE)
+                top_return_sectors = set(sector_stats.head(5).index)
+                # Sort by PE_Ratio_mean and get the sector names
+                low_pe_sectors = set(metrics_by_sector.sort_values(pe_mean_col).head(5)['Sector'])
+                value_sectors = top_return_sectors.intersection(low_pe_sectors)
+
+                if value_sectors:
+                    f.write("a) Value Opportunity Sectors (high returns with lower valuations):\n")
+                    for sector in value_sectors:
+                         # Get PE from the metrics_by_sector DataFrame using boolean indexing
+                         pe_value = metrics_by_sector.loc[metrics_by_sector['Sector'] == sector, pe_mean_col].iloc[0]
+                         f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% return, " +
+                                f"PE (Mean): {pe_value:.2f}\n")
+
+                # High growth sectors (regardless of valuation)
+                high_growth = sector_stats.head(3).index
+                f.write("\nb) Growth Focus Sectors (highest returns, regardless of valuation):\n")
+                for sector in high_growth:
+                    f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% average return\n")
+
+                # Diversification suggestions
+                f.write("\nc) Diversification Opportunities:\n")
+                f.write("   Consider allocation across the following sectors for diversification:\n")
+                diverse_sectors = sector_stats.iloc[::max(1, len(sector_stats)//5)].index[:5]
+                for sector in diverse_sectors:
+                    f.write(f"   - {sector}\n")
+            else:
+                # If PE ratio mean column is not available, provide simpler implications
+                f.write("a) Growth Focus Sectors (highest returns):\n")
+                high_growth = sector_stats.head(3).index
+                for sector in high_growth:
+                    f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% average return\n")
+
+                f.write("\nb) Diversification Opportunities:\n")
+                f.write("   Consider allocation across the following sectors for diversification:\n")
+                diverse_sectors = sector_stats.iloc[::max(1, len(sector_stats)//5)].index[:5]
+                for sector in diverse_sectors:
+                    f.write(f"   - {sector}\n")
+        else:
+             # Investment implications when no metrics are available at all
+            f.write("Financial metrics data was not available, implications based solely on performance:\n\n")
+            f.write("a) Growth Focus Sectors (highest returns):\n")
             high_growth = sector_stats.head(3).index
-            f.write("\nb) Growth Focus Sectors (highest returns, regardless of valuation):\n")
             for sector in high_growth:
-                f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% average return\n")
-            
-            # Diversification suggestions
-            f.write("\nc) Diversification Opportunities:\n")
+                 f.write(f"   - {sector}: {sector_stats.loc[sector, 'YearlyReturn_mean']:.2f}% average return\n")
+
+            f.write("\nb) Diversification Opportunities:\n")
             f.write("   Consider allocation across the following sectors for diversification:\n")
-            # Get 5 sectors distributed across the performance range
             diverse_sectors = sector_stats.iloc[::max(1, len(sector_stats)//5)].index[:5]
             for sector in diverse_sectors:
                 f.write(f"   - {sector}\n")
-        
+
         # Section 5: Conclusion
         f.write("\n\n5. Conclusion\n")
         f.write("-------------\n\n")
@@ -745,10 +725,21 @@ def main():
         sector_stats = analyze_sector_performance(data, args.output_dir)
         top_stocks = analyze_top_stocks_by_sector(data, args.output_dir)
         concentration = analyze_sector_concentration(data, args.output_dir)
-        metrics_by_sector = analyze_sector_metrics(data, args.output_dir)
-        
+
+        # Call integrate_financial_metrics instead of analyze_sector_metrics
+        # Check if metrics are available first
+        metrics_available = any(col.startswith(('PE_', 'PB_', 'ROE', 'Debt', 'Dividend')) for col in data.columns)
+        metrics_data_for_report = None # Initialize needed for report function call
+        if metrics_available:
+            print("\nAnalyzing financial metrics by sector (detailed)...")
+            # This function now returns the flattened DataFrame or an empty one if error
+            metrics_data_for_report = integrate_financial_metrics(data, args.output_dir)
+        else:
+            print("\nNo financial metrics available. Skipping detailed sector metrics analysis.")
+
         # Step 3: Generate comprehensive report
-        generate_sector_report(sector_stats, concentration, metrics_by_sector, args.output_dir)
+        # Pass the result of integrate_financial_metrics (or None) to the modified report function
+        generate_sector_report(sector_stats, concentration, metrics_data_for_report, args.output_dir)
         
         # Print success message
         print("\nSector analysis completed successfully.")
@@ -762,5 +753,9 @@ def main():
     return 0  # Return success code
 
 if __name__ == "__main__":
-    # Execute the main function and exit with the returned status code
-    exit(main()) 
+    # When run as script, it might need path adjustments OR assume ran via python -m
+    # For simplicity and promoting standard usage (python -m renaissance.analysis.sector_analysis),
+    # we remove the explicit sys.path modification here too.
+    # If direct script execution (`python renaissance/analysis/sector_analysis.py`) is
+    # absolutely required without installation or -m, the user might need to set PYTHONPATH.
+    sys.exit(main()) 

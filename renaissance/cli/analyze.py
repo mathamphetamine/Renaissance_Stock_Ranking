@@ -27,12 +27,18 @@ def main():
         top_stocks = analyze_top_stocks_by_sector(data, args.output_dir)
         concentration = analyze_sector_concentration(data, args.output_dir)
         
-        # If financial metrics are available, analyze them
+        # Initialize variable for metrics data
+        metrics_data_for_report = None
+        # If financial metrics are available, analyze them and store the result
         if any(col.startswith(('PE_', 'PB_', 'ROE', 'Debt', 'Dividend')) for col in data.columns):
-            integrate_financial_metrics(data, args.output_dir)
+            print("\nAnalyzing financial metrics by sector (detailed - CLI)...")
+            metrics_data_for_report = integrate_financial_metrics(data, args.output_dir)
+        else:
+             print("\nNo financial metrics available. Skipping detailed sector metrics analysis (CLI).")
         
         # Generate consolidated report
-        generate_sector_report(sector_stats, concentration, top_stocks, args.output_dir)
+        # Pass the correct metrics data (or None) to the report function
+        generate_sector_report(sector_stats, concentration, metrics_data_for_report, args.output_dir)
         
         print("\nSector analysis completed successfully.")
         print(f"Results saved to {args.output_dir}")
