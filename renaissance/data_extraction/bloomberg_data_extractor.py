@@ -31,7 +31,6 @@ Author: Renaissance Investment Managers
 Version: 1.0.0
 """
 
-import blpapi
 import pandas as pd
 import datetime
 import argparse
@@ -64,10 +63,8 @@ def setup_logging(output_dir=None):
     
     return logging.getLogger(__name__)
 
-# Bloomberg API session parameters
-SESSION_OPTIONS = blpapi.SessionOptions()
-SESSION_OPTIONS.setServerHost('localhost')
-SESSION_OPTIONS.setServerPort(8194)  # Default Bloomberg API port
+# Create logger
+logger = logging.getLogger(__name__)
 
 def parse_arguments():
     """
@@ -137,6 +134,18 @@ def get_nifty500_constituents(test_mode=False):
             {"ISIN": "INE121A01024", "Name": "Adani Enterprises Ltd", "Ticker": "ADE:IN", "Sector": "Industrials"}
         ]
         return pd.DataFrame(sample_data)
+    
+    # Only import blpapi when actually needed (not in test mode)
+    try:
+        import blpapi
+    except ImportError:
+        logger.error("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        raise ImportError("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        
+    # Set up session options
+    SESSION_OPTIONS = blpapi.SessionOptions()
+    SESSION_OPTIONS.setServerHost('localhost')
+    SESSION_OPTIONS.setServerPort(8194)  # Default Bloomberg API port
     
     logger.info("Getting NIFTY 500 constituents from Bloomberg")
     
@@ -448,6 +457,18 @@ def get_historical_prices(isins, start_date, end_date, test_mode=False):
         df["Date"] = pd.to_datetime(df["Date"])
         return df
     
+    # Only import blpapi when actually needed (not in test mode)
+    try:
+        import blpapi
+    except ImportError:
+        logger.error("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        raise ImportError("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        
+    # Set up session options
+    SESSION_OPTIONS = blpapi.SessionOptions()
+    SESSION_OPTIONS.setServerHost('localhost')
+    SESSION_OPTIONS.setServerPort(8194)  # Default Bloomberg API port
+    
     logger.info(f"Getting historical prices for {len(isins)} stocks")
     
     session = blpapi.Session(SESSION_OPTIONS)
@@ -596,6 +617,18 @@ def get_additional_metrics(isins, test_mode=False):
             })
         
         return pd.DataFrame(data)
+    
+    # Only import blpapi when actually needed (not in test mode)
+    try:
+        import blpapi
+    except ImportError:
+        logger.error("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        raise ImportError("Bloomberg API (blpapi) not found. Please install it or use --test-mode.")
+        
+    # Set up session options
+    SESSION_OPTIONS = blpapi.SessionOptions()
+    SESSION_OPTIONS.setServerHost('localhost')
+    SESSION_OPTIONS.setServerPort(8194)  # Default Bloomberg API port
     
     logger.info(f"Getting additional financial metrics for {len(isins)} stocks")
     

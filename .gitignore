@@ -84,8 +84,9 @@ env/
 # Project specific
 output/
 *.log
-data/historical_prices.csv
-data/nifty500_list.csv
+data/*
+!data/sample/
+data/sample/*.*
 
 # OS specific
 .DS_Store

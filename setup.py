@@ -25,11 +25,11 @@ with open('requirements.txt') as f:
 
 setup(
     name="renaissance-stock-ranking",
-    version="2.0.0", # Assuming version bump
-    description="Automated Stock Ranking System for Renaissance Investment Managers",
+    version="2.0.1", # Updated version
+    description="Automated Stock Ranking System", # Shortened description slightly
     long_description=open('README.md').read(), # Include README for more detail on PyPI
     long_description_content_type='text/markdown',
-    author="Renaissance Investment Managers",
+    author="mathamphetamine", # author
     packages=find_packages(),
     install_requires=core_reqs, # Use dynamically read core requirements
     extras_require={

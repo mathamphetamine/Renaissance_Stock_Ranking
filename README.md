@@ -1,5 +1,31 @@
 # Renaissance Stock Ranking System
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)]()
+[![Bloomberg API](https://img.shields.io/badge/Bloomberg-API-yellow.svg)](https://www.bloomberg.com/professional/support/api-library/)
+
+A comprehensive system for analyzing, ranking, and visualizing NIFTY 500 stocks based on performance metrics and sector analysis.
+
+## Table of Contents
+
+- [At a Glance](#at-a-glance)
+- [What Problems Does It Solve?](#what-problems-does-it-solve)
+- [System Workflow](#system-workflow)
+- [Key Features](#key-features)
+- [Project Structure](#project-structure-and-organization)
+- [Input Data Requirements](#input-data-requirements)
+- [Installation Guide](#installation-guide)
+- [Ways to Use the System](#ways-to-use-the-system)
+- [Complete Workflow Guide](#complete-workflow-guide)
+- [Common Tasks Guide](#common-tasks-guide)
+- [Output Files and Visualizations](#output-files-and-visualizations)
+- [Troubleshooting Guide](#troubleshooting-guide)
+- [Need More Help?](#need-more-help)
+- [Glossary of Terms](#glossary-of-terms)
+- [GitHub Deployment](#github-deployment-instructions)
+- [Author](#author)
+- [License](#license)
+
 ## At a Glance
 
 The Renaissance Stock Ranking System automates the analysis of NIFTY 500 stocks, transforming what was once a time-consuming manual process into an efficient, accurate workflow. The system calculates yearly returns on a monthly rolling basis, ranks stocks by performance, tracks rank changes, analyzes sector performance, and visualizes results through easy-to-understand charts.
@@ -165,12 +191,12 @@ Renaissance_Stock_Ranking/
 │   └── visualization/     # Visualization modules
 ├── scripts/               # Convenience scripts for users
 ├── tests/                 # Test scripts
-├── install.sh             # Installation script for macOS/Linux
-├── install.bat            # Installation script for Windows
+├── install.sh             # Installation script for macOS/Linux (Legacy - See Installation Guide)
+├── install.bat            # Installation script for Windows (Legacy - See Installation Guide)
 ├── README.md              # This file
 ├── setup.py               # Package installation configuration
 ├── pyproject.toml         # Modern Python packaging configuration
-└── requirements.txt       # Python dependencies
+└── requirements.txt       # Python dependencies (Legacy - See Installation Guide)
 ```
 
 ## Input Data Requirements
@@ -222,140 +248,123 @@ The system is designed to work seamlessly with data extracted from Bloomberg, bu
 
 ## Installation Guide
 
-### Quick Installation
+Follow these steps to set up the Renaissance Stock Ranking System on your machine using the recommended `pip` installation method.
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/Renaissance_Stock_Ranking.git
-   cd Renaissance_Stock_Ranking
-   ```
+**Prerequisites:**
+- **Python**: Version 3.8 or higher. Ensure Python is added to your system's PATH during installation.
+- **Git**: Required to clone the repository.
+- **Bloomberg Terminal**: (Required for live data extraction) Must be installed, running, and logged in *before* installing `blpapi` or running the data extraction step.
 
-2. **Run the installation script**:
-   - Windows: `install.bat`
-   - Mac/Linux: `./install.sh`
+**Steps:**
 
-### Detailed Installation for Different User Types
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
+    cd Renaissance_Stock_Ranking
+    ```
 
-#### For Users Familiar with Python and Command-Line:
+2.  **Create and Activate Virtual Environment**:
+    *(Recommended to isolate dependencies)*
+    ```bash
+    # Windows
+    python -m venv venv
+    venv\\Scripts\\activate
 
-**Windows:**
-```bash
-git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
-cd Renaissance_Stock_Ranking
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-# Optional: Install as editable package
-pip install -e .
-```
+    # macOS / Linux
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+    *(Remember to activate the environment (`venv\\Scripts\\activate` or `source venv/bin/activate`) each time you open a new terminal to work on the project).*
 
-**Mac/Linux:**
-```bash
-git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
-cd Renaissance_Stock_Ranking
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-# Optional: Install as editable package
-pip install -e .
-```
+3.  **Install the Package and Core Dependencies**:
+    *(Using editable mode `-e` allows code changes without reinstalling)*
+    ```bash
+    pip install -e .
+    ```
 
-#### For Users Less Familiar with Python (Simplified):
+4.  **Install Bloomberg API (If Using Live Data)**:
+    *   **Ensure Bloomberg Terminal is running and logged in.**
+    *   Run the following command:
+    ```bash
+    pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+    ```
+    *(See Troubleshooting section if issues occur).*
 
-**Windows Installation:**
-1. **Install Python**:
-   - Download Python 3.8 or higher from [python.org](https://www.python.org/downloads/)
-   - During installation, check "Add Python to PATH"
-   - Click "Install Now"
+5.  **Install Optional Dependencies (As Needed)**:
+    *   For visualization features:
+        ```bash
+        pip install -e ".[viz]"
+        ```
+    *   For Jupyter notebook examples:
+        ```bash
+        pip install -e ".[notebook]"
+        ```
+    *   For running tests:
+        ```bash
+        pip install -e ".[test]"
+        ```
+    *   To install *all* optional dependencies (excluding `blpapi`):
+        ```bash
+        pip install -e ".[viz,notebook,test]"
+        ```
 
-2. **Get the Stock Ranking System**:
-   - Download the ZIP file of this project from GitHub
-   - Extract the ZIP file to a folder on your computer
-
-3. **Open Command Prompt**:
-   - Press Windows+R, type "cmd" and press Enter
-   - Navigate to the project folder:
-     ```
-     cd path\to\Renaissance_Stock_Ranking
-     ```
-
-4. **Set Up the System**:
-   - Create a virtual environment (one-time setup):
-     ```
-     python -m venv venv
-     venv\Scripts\activate
-     pip install -r requirements.txt
-     ```
-
-5. **Use the System**:
-   - Place your data files in the "data" folder
-   - Run the system using the scripts in the "scripts" folder
-
-**Mac/Linux Installation:**
-1. **Install Python** (if not already installed):
-   - Mac: Install Homebrew, then run `brew install python3`
-   - Linux: Use package manager, e.g., `sudo apt install python3`
-
-2. **Get the Stock Ranking System**:
-   - Download the ZIP file from GitHub
-   - Extract to your preferred location
-
-3. **Open Terminal**:
-   - Navigate to the project folder:
-     ```
-     cd path/to/Renaissance_Stock_Ranking
-     ```
-
-4. **Set Up the System**:
-   - Create a virtual environment (one-time setup):
-     ```
-     python3 -m venv venv
-     source venv/bin/activate
-     pip install -r requirements.txt
-     ```
-
-5. **Use the System**:
-   - Place your data files in the "data" folder
-   - Run the system using the scripts in the "scripts" folder
+*(Note: This `pip install .` approach uses `setup.py` for robust dependency management and is preferred over using the legacy `requirements.txt` or `install.sh`/`.bat` scripts).*
 
 ## Ways to Use the System
 
-The system is designed to be flexible and can be used in multiple ways:
+The system offers flexibility for different users:
 
-### 1. For Investment Analysts: Easy Scripts
-Simple scripts in the `scripts/` directory can be run with minimal technical knowledge:
-```bash
-python scripts/run_ranking.py
-python scripts/visualize_results.py
-python scripts/analyze_sectors.py
-python scripts/extract_bloomberg.py  # If you have Bloomberg access
-```
+### 1. Using Command-Line Tools (Recommended for Regular Use)
 
-### 2. For Technical Users: Command-Line Tools
-After installation, use these commands from anywhere:
-```bash
-renaissance-rank
-renaissance-visualize
-renaissance-analyze
-renaissance-extract
-```
+Once installed (using `pip install -e .`), use these commands in your activated virtual environment:
 
-### 3. For Developers: Python Package API
-Import and use in your own Python code:
+*   **Extract Data**:
+    *   Live Bloomberg Data: `renaissance-extract`
+    *   Test/Sample Data: `renaissance-extract --test-mode`
+*   **Calculate Rankings**: `renaissance-rank`
+*   **Analyze Sectors**: `renaissance-analyze`
+*   **Generate Visualizations**: `renaissance-visualize`
+
+Add `--help` to any command for more options (e.g., `renaissance-rank --help`).
+
+### 2. Using Convenience Scripts (Alternative)
+
+If you prefer not to install the package using `pip install -e .`, you can run Python scripts directly from the `scripts/` directory (ensure dependencies are installed, e.g., via `pip install -r requirements.txt`, though this is legacy):
+
+*   **Extract Data**:
+    *   Live Bloomberg Data: `python scripts/extract_bloomberg.py`
+    *   Test/Sample Data: `python scripts/extract_bloomberg.py --test-mode`
+*   **Calculate Rankings**: `python scripts/run_ranking.py`
+*   **Analyze Sectors**: `python scripts/analyze_sectors.py`
+*   **Generate Visualizations**: `python scripts/visualize_results.py`
+
+*(Note: These scripts simply call the underlying command-line tools if the package is installed. The CLI tool approach is generally recommended for consistency).*
+
+### 3. Using the Python Package API (For Developers)
+
+Import and integrate the core modules into your own Python applications (requires package installation):
 ```python
+# Example: Basic Ranking
 from renaissance.core.data_loader import load_and_prepare_all_data
 from renaissance.core.return_calculator import calculate_yearly_returns
-from renaissance.core.ranking_system import rank_stocks_by_return
+from renaissance.core.ranking_system import rank_stocks_by_return, calculate_rank_changes
 
-# Load data and rank stocks
-nifty500_df, prices_df = load_and_prepare_all_data('data/nifty500_list.csv', 'data/historical_prices.csv')
+# Load sample data (adjust paths if necessary)
+nifty500_df, prices_df, _ = load_and_prepare_all_data(
+    nifty_file='data/sample/nifty500_list.csv',
+    prices_file='data/sample/historical_prices.csv'
+)
+
 returns_df = calculate_yearly_returns(prices_df)
 ranked_df = rank_stocks_by_return(returns_df)
+final_df = calculate_rank_changes(ranked_df)
+
+print(final_df.head())
 ```
 
 ## Complete Workflow Guide
 
-This section walks you through the entire process from installation to portfolio construction.
+Follow this workflow for a typical analysis cycle using the recommended command-line tools.
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
@@ -363,183 +372,96 @@ This section walks you through the entire process from installation to portfolio
 └───────────────────────────────────────────────────────────────────────┘
                                │
 ┌──────────────────────────────▼─────────────────────────────────────────┐
-│ 1️⃣ INSTALLATION                                                        │
-│   ┌────────────────┐     ┌──────────────┐     ┌───────────────────┐    │
-│   │ Clone Repo     │────>│ Run Install  │────>│ Verify            │    │
-│   │ from GitHub    │     │ Script       │     │ Installation      │    │
-│   └────────────────┘     └──────────────┘     └──────────┬────────┘    │
+│ 1️⃣ INSTALLATION (One Time)                                             │
+│   ┌─────────────┐     ┌───────────────┐     ┌───────────────────┐    │
+│   │ Clone Repo  │────>│ Setup Venv &  │────>│ Install blpapi /  │    │
+│   │ & Install   │     │ Activate Venv │     │ Optional Extras   │    │
+│   │ (pip install .) │     │               │     │                   │    │
+│   └─────────────┘     └───────────────┘     └──────────┬────────┘    │
 │                                                          │             │
 └──────────────────────────────────────────────────────────▼─────────────┘
                                                            │
 ┌──────────────────────────────────────────────────────────▼─────────────┐
-│ 2️⃣ DATA COLLECTION                                                     │
+│ 2️⃣ DATA EXTRACTION (Run Periodically, e.g., Monthly)                 │
+│   ┌───────────────────────────────────┐                                │
+│   │ renaissance-extract               │                                │
+│   │ (Use --test-mode if no Bloomberg) │                                │
+│   └─────────────────┬─────────────────┘                                │
+│                     │ (Creates files in data/)                         │
+└─────────────────────▼────────────────────────────────────────────────┘
+                      │
+┌─────────────────────▼────────────────────────────────────────────────┐
+│ 3️⃣ RANKING CALCULATION                                                 │
+│   ┌───────────────────────────────────┐                                │
+│   │ renaissance-rank                  │                                │
+│   └─────────────────┬─────────────────┘                                │
+│                     │ (Creates rankings in output/)                    │
+└─────────────────────▼────────────────────────────────────────────────┘
+                      │
+┌─────────────────────▼────────────────────────────────────────────────┐
+│ 4️⃣ ANALYSIS & VISUALIZATION                                          │
+│   ┌─────────────────────┐     ┌───────────────────────┐                │
+│   │ renaissance-analyze │ ──> │ renaissance-visualize │                │
+│   └─────────────────────┘     └─────────┬─────────────┘                │
+│                                         │ (Creates reports & charts in output/)│
+└─────────────────────────────────────────▼──────────────────────────────┘
+                                          │
+┌─────────────────────────────────────────▼──────────────────────────────┐
+│ 5️⃣ REVIEW RESULTS & MAKE DECISIONS                                       │
 │   ┌────────────────┐     ┌──────────────┐     ┌───────────────────┐    │
-│   │ Extract NIFTY  │────>│ Extract Stock│────>│ (Optional)        │    │
-│   │ 500 List       │     │ Price History│     │ Financial Metrics │    │
-│   └────────────────┘     └──────────────┘     └──────────┬────────┘    │
-│                                                          │             │
-└──────────────────────────────────────────────────────────▼─────────────┘
-                                                           │
-┌──────────────────────────────────────────────────────────▼─────────────┐
-│ 3️⃣ CORE RANKING PROCESS                                                │
-│   ┌────────────────┐     ┌──────────────┐     ┌───────────────────┐    │
-│   │ Calculate      │────>│ Rank Stocks  │────>│ Calculate Rank    │    │
-│   │ Yearly Returns │     │ by Returns   │     │ Changes           │    │
-│   └────────────────┘     └──────────────┘     └──────────┬────────┘    │
-│                                                          │             │
-└──────────────────────────────────────────────────────────▼─────────────┘
-                                                           │
-┌──────────────────────────────────────────────────────────▼─────────────┐
-│ 4️⃣ ADVANCED ANALYSIS                                                   │
-│   ┌────────────────┐     ┌──────────────┐     ┌───────────────────┐    │
-│   │ Generate       │     │ Analyze      │     │ Create            │    │
-│   │ Visualizations │     │ Sectors      │     │ Summary Reports   │    │
-│   └───────┬────────┘     └──────┬───────┘     └──────────┬────────┘    │
-│           │                     │                        │             │
-│           └─────────────────────┼────────────────────────┘             │
-│                                 │                                      │
-└─────────────────────────────────▼──────────────────────────────────────┘
-                                  │
-┌─────────────────────────────────▼──────────────────────────────────────┐
-│ 5️⃣ PORTFOLIO CONSTRUCTION                                              │
-│   ┌────────────────┐     ┌──────────────┐     ┌───────────────────┐    │
-│   │ Identify Top   │────>│ Select Best  │────>│ Balance with      │    │
-│   │ Sectors        │     │ Stocks       │     │ Financial Metrics │    │
+│   │ Review Reports │────>│ Examine Charts│────>│ Inform Investment │    │
+│   │ (Excel/CSVs)   │     │ (HTML/Images)│     │ Strategy          │    │
 │   └────────────────┘     └──────────────┘     └───────────────────┘    │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Step 1: Installation
+Follow the [Installation Guide](#installation-guide) above using the `pip install -e .` method.
 
-Choose the method that works best for you:
+### Step 2: Data Extraction
+Choose the command appropriate for your setup:
 
-#### Using the Installation Scripts (Recommended)
+*   **With Bloomberg Access:**
+    ```bash
+    # Activate your virtual environment first
+    renaissance-extract
+    ```
+    This connects to the Bloomberg API and saves live data to the `data/` directory (or the directory specified with `--output-dir`).
 
-On Windows:
+*   **Without Bloomberg Access (Testing/Development):**
+    ```bash
+    # Activate your virtual environment first
+    renaissance-extract --test-mode
+    ```
+    This generates sample data files in the `data/` directory (or specified `--output-dir`) without needing Bloomberg.
+
+### Step 3: Run Core Ranking
+Process the extracted data to calculate returns and rankings:
 ```bash
-git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
-cd Renaissance_Stock_Ranking
-install.bat
+# Activate your virtual environment first
+renaissance-rank
 ```
+This reads data from `data/` (by default) and saves ranking results (e.g., `stock_rankings.xlsx`) to the `output/` directory (by default).
 
-On macOS/Linux:
-```bash
-git clone https://github.com/mathamphetamine/Renaissance_Stock_Ranking.git
-cd Renaissance_Stock_Ranking
-./install.sh
-```
+### Step 4: Advanced Analysis & Visualization
 
-Verify your installation:
-```bash
-renaissance-rank --test-mode
-```
+*   **Analyze Sectors:**
+    ```bash
+    # Activate your virtual environment first
+    renaissance-analyze
+    ```
+    Reads rankings and generates sector analysis reports in `output/sector_analysis/`.
 
-### Step 2: Data Collection
+*   **Generate Visualizations:**
+    ```bash
+    # Activate your virtual environment first
+    renaissance-visualize
+    ```
+    Reads rankings and generates charts/HTML reports in `output/visualizations/`.
 
-You have three options for data collection:
-
-#### Option A: Use the Bloomberg API (Automated, Requires Bloomberg Terminal)
-```bash
-# Extract all necessary data using the Bloomberg API
-python scripts/extract_bloomberg.py
-```
-
-This option:
-- Automatically extracts NIFTY 500 constituents with sector information
-- Retrieves historical monthly prices with corporate action adjustments
-- Collects key financial metrics for deeper analysis
-- Saves all data in the required format
-
-For detailed instructions on setting up and using the Bloomberg API, see the [Bloomberg API Guide](docs/bloomberg_api_guide.md).
-
-#### Option B: Manual Extraction (Requires Bloomberg Terminal)
-Follow the detailed steps in [Data Extraction Guide](docs/data_extraction_guide.md) to:
-1. Extract NIFTY 500 constituent list with ISINs
-2. Extract historical monthly prices
-3. (Optional) Extract financial metrics
-4. Save them as CSV files in the data directory
-
-#### Option C: Use Sample Data (For Testing)
-```bash
-# Copy sample data to the data directory
-cp data/sample/* data/
-```
-
-### Step 3: Run the Core Ranking Process
-
-```bash
-# Run the main ranking system
-python scripts/run_ranking.py
-```
-
-This will:
-- Load the NIFTY 500 list and historical prices
-- Calculate 12-month returns for each stock
-- Rank stocks based on these returns
-- Calculate rank changes from the previous month
-- Generate output files in the `output/` directory
-
-### Step 4: Advanced Analysis
-
-#### Generate Visualizations
-```bash
-# Create charts and graphs from the ranking results
-python scripts/visualize_results.py
-```
-
-This creates several visualizations in `output/visualizations/`:
-- Return distribution charts
-- Top and bottom performers
-- Rank change distribution
-- And more
-
-#### Perform Sector Analysis
-```bash
-# Analyze performance by sector
-python scripts/analyze_sectors.py
-```
-
-This generates sector-level insights in `output/sector_analysis/`:
-- Sector performance rankings
-- Sector concentration analysis
-- Top stocks by sector
-- Investment recommendations based on sector performance
-
-### Step 5: Portfolio Construction
-
-Using the outputs from the previous steps, you can construct a portfolio:
-
-1. **Identify top-performing sectors** from `sector_performance.csv`
-2. **Select the highest-ranked stocks** from these sectors using `NIFTY500_Rankings_*.csv`
-3. **Consider sector concentration** to ensure diversification
-4. **Use financial metrics** to fine-tune stock selection (if available)
-
-Example portfolio construction approach:
-```python
-# Example Python code (you can run this in a Jupyter notebook)
-import pandas as pd
-
-# Load sector performance data
-sector_perf = pd.read_csv('output/sector_analysis/sector_performance.csv')
-
-# Identify top 3 sectors
-top_sectors = sector_perf.sort_values('Avg_Return', ascending=False).head(3)['Sector'].tolist()
-
-# Load stock rankings
-rankings = pd.read_csv('output/NIFTY500_Rankings_YYYYMMDD.csv')  # Replace with actual filename
-
-# Get top 5 stocks from each top sector
-portfolio = []
-for sector in top_sectors:
-    sector_stocks = rankings[rankings['Sector'] == sector].sort_values('Rank').head(5)
-    portfolio.append(sector_stocks)
-
-# Combine into final portfolio
-final_portfolio = pd.concat(portfolio)
-print("Portfolio of top 15 stocks from top 3 sectors:")
-print(final_portfolio[['Name', 'Sector', 'Yearly_Return', 'Rank']])
-```
+### Step 5: Review Results
+Examine the generated Excel files, CSVs, and visualizations in the `output/` directory to inform investment decisions.
 
 ## Common Tasks Guide
 
@@ -550,11 +472,11 @@ This section provides quick reference instructions for common tasks that analyst
 To identify the top-performing stocks for a given month:
 
 ```bash
-# Ensure you have the latest rankings
-python scripts/run_ranking.py
+# Ensure you have the latest rankings by running the workflow up to step 3
+renaissance-rank
 
-# View the top 10 stocks (stocks are ranked from 1 to 500)
-head -n 11 output/NIFTY500_Rankings_*.csv
+# Check the latest output file in the output/ directory
+# e.g., open NIFTY500_Rankings_*.xlsx in Excel and sort by 'Rank'
 ```
 
 ### Task 2: Identify Stocks with Improving Performance
@@ -562,11 +484,11 @@ head -n 11 output/NIFTY500_Rankings_*.csv
 To find stocks that have shown the biggest improvement in rankings:
 
 ```bash
-# Run the ranking system to calculate rank changes
-python scripts/run_ranking.py
+# Ensure you have the latest rankings
+renaissance-rank
 
-# Sort by rank delta (negative values mean improvement)
-sort -t, -k6n output/NIFTY500_RankDelta_*.csv | head -n 10
+# Check the latest output file in the output/ directory
+# e.g., open NIFTY500_Rankings_*.xlsx and sort by 'Rank_Change' (ascending)
 ```
 
 ### Task 3: Analyze Sector Performance Trends
@@ -575,13 +497,10 @@ To understand which sectors are performing well:
 
 ```bash
 # Run the sector analysis
-python scripts/analyze_sectors.py
+renaissance-analyze
 
-# View the sector performance report
-cat output/sector_analysis/sector_analysis_report.txt
-
-# Or open the sector performance CSV for more detailed metrics
-cat output/sector_analysis/sector_performance.csv
+# View the sector performance report in output/sector_analysis/
+# e.g., open sector_analysis_report.xlsx or sector_performance.csv
 ```
 
 ### Task 4: Create a Monthly Report with Visualizations
@@ -589,256 +508,120 @@ cat output/sector_analysis/sector_performance.csv
 To generate a full set of visualizations for monthly reports:
 
 ```bash
-# Run the core ranking
-python scripts/run_ranking.py
+# Ensure rankings are up-to-date
+renaissance-rank
 
 # Generate visualizations
-python scripts/visualize_results.py
+renaissance-visualize
 
-# Create a directory for this month's report
-mkdir -p reports/$(date +%Y-%m)
-
-# Copy all the output files and visualizations to the report directory
-cp output/NIFTY500_Rankings_*.csv reports/$(date +%Y-%m)/
-cp output/NIFTY500_RankDelta_*.csv reports/$(date +%Y-%m)/
-cp -r output/visualizations/* reports/$(date +%Y-%m)/
+# The visualizations will be saved in output/visualizations/
+# including an index HTML file for easy navigation.
 ```
 
 ### Task 5: Perform a Custom Analysis on Specific Sectors
 
-For a targeted analysis of specific sectors (e.g., Technology and Financials):
-
-```python
-# Python code example
-from renaissance.core.data_loader import load_and_prepare_all_data
-from renaissance.core.return_calculator import calculate_yearly_returns
-import pandas as pd
-
-# Load data
-nifty500_df, prices_df = load_and_prepare_all_data('data/nifty500_list.csv', 'data/historical_prices.csv')
-
-# Calculate returns for all stocks
-returns_df = calculate_yearly_returns(prices_df)
-
-# Merge with sector information
-merged_df = pd.merge(returns_df, nifty500_df[['ISIN', 'Sector']], on='ISIN')
-
-# Filter for specific sectors
-target_sectors = ['Information Technology', 'Financials']
-filtered_df = merged_df[merged_df['Sector'].isin(target_sectors)]
-
-# Calculate average returns by sector and date
-sector_returns = filtered_df.groupby(['Date', 'Sector'])['YearlyReturn'].mean().reset_index()
-
-# Compare sector performance over time
-pivot_df = sector_returns.pivot(index='Date', columns='Sector', values='YearlyReturn')
-print(pivot_df.tail(12))  # Last 12 months of data
-```
+For a targeted analysis, use the Python API as shown in the [Ways to Use the System](#3-using-the-python-package-api-for-developers) section, modifying the filtering logic as needed.
 
 ### Task 6: Update Data for a New Month
 
 To update your data at the start of a new month:
 
 ```bash
-# If you have Bloomberg access, use the Bloomberg extractor
-python scripts/extract_bloomberg.py
+# Activate your virtual environment
+# If you have Bloomberg access:
+renaissance-extract
 
-# Otherwise, follow the manual extraction process
-# 1. Use Bloomberg Terminal to export new data following docs/data_extraction_guide.md
-# 2. Place updated files in the data directory
-# 3. Run the ranking process with the new data
-python scripts/run_ranking.py
+# If you don't have Bloomberg access (for testing):
+renaissance-extract --test-mode
+
+# After extraction, re-run the ranking and analysis steps:
+renaissance-rank
+renaissance-analyze
+renaissance-visualize
 ```
 
 ### Task 7: Generate a Comprehensive Sector Allocation Strategy
 
-To develop a complete sector allocation strategy based on performance:
+*(Note: A dedicated script `generate_sector_strategy.py` was mentioned previously but may not exist. This task involves manual interpretation of the analysis results)*
 
-```bash
-# Run all the necessary analyses
-python scripts/run_ranking.py
-python scripts/analyze_sectors.py
-
-# Run the sector allocation strategy generator
-python scripts/generate_sector_strategy.py --output-file strategies/sector_allocation_$(date +%Y%m).pdf
-```
+1.  Run the full workflow (`extract`, `rank`, `analyze`).
+2.  Review the outputs in `output/` and `output/sector_analysis/`.
+3.  Use the sector performance data (`sector_performance.csv`) and stock rankings (`NIFTY500_Rankings_*.xlsx`) to inform your allocation decisions based on your investment criteria (e.g., top stocks from top sectors, diversification rules).
 
 ## Output Files and Visualizations
 
 ### Output Files
 
-The system generates several output files:
+The system generates several output files, typically within the `output/` directory:
 
-1. **Stock Rankings (`NIFTY500_Rankings_YYYYMMDD.csv`)**
-   - Stocks ranked by yearly returns for the most recent month.
+1.  **Stock Rankings (`NIFTY500_Rankings_YYYYMMDD.xlsx` or similar)**:
+    *   Contains sheets for detailed rankings, returns, and rank changes.
+    *   Stocks ranked by yearly returns for the most recent month.
+    *   Includes rank changes from the previous month.
 
-2. **Rank Changes (`NIFTY500_RankDelta_YYYYMMDD.csv`)**
-   - How each stock's rank has changed from the previous month.
+2.  **Sector Analysis Files (in `output/sector_analysis/`)**:
+    *   `sector_performance.csv`: Average returns, volatility, etc., per sector.
+    *   `sector_concentration.csv`: Metrics on portfolio concentration within sectors.
+    *   `sector_analysis_report.xlsx` (Optional): Consolidated report.
 
-3. **Summary Report (`NIFTY500_Ranking_Summary_YYYYMMDD_HHMMSS.txt`)**
-   - Text summary of key statistics from the ranking process.
-
-4. **Sector Analysis Files (in `output/sector_analysis/`)**
-   - Sector performance rankings
-   - Sector concentration analysis
-   - Top stocks by sector
-   - Investment recommendations based on sector performance
+3.  **Log Files (in `output/logs/`)**:
+    *   Detailed logs from each run (`ranking_system.log`, `bloomberg_extractor.log`, etc.). Useful for debugging.
 
 ### Visualization Outputs
 
-The system generates several types of visualization outputs to help analyze the stock rankings and performance:
+Visualizations are saved in `output/visualizations/`:
 
 #### HTML Index File
+The main entry point is `visualization_index_YYYYMMDD_HHMMSS.html`. This file provides:
+- An organized overview of all generated visualizations.
+- Explanations for interpreting each chart.
+- Links to individual visualization files (HTML or image formats).
 
-The main entry point for visualizations is an HTML index file located at `output/visualizations/visualization_index_YYYYMMDD_HHMMSS.html`. This file provides:
+#### Types of Visualizations (Examples)
+1.  **Distribution Charts**: Return Distribution, Rank Delta Distribution.
+2.  **Performance Charts**: Top/Bottom Performers, Return by Quartile.
+3.  **Change Analysis Charts**: Top Improvers/Decliners, Return vs. Rank Scatter.
+4.  **Sector Charts**: Sector Average Returns, Sector vs. Index Performance.
 
-- An organized overview of all generated visualizations
-- Detailed explanations for interpreting each chart
-- Navigation to individual visualization files
-
-#### Types of Visualizations
-
-1. **Distribution Charts**
-   - **Return Distribution**: Shows how stock returns are distributed across the NIFTY 500
-   - **Rank Delta Distribution**: Displays how ranking changes are distributed
-
-2. **Performance Charts**
-   - **Top Performers**: Highlights the top 10-20 stocks with highest returns
-   - **Bottom Performers**: Shows the worst-performing stocks
-   - **Return by Quartile**: Compares returns across different performance quartiles
-
-3. **Change Analysis Charts**
-   - **Top Improvers**: Stocks with the biggest positive rank changes
-   - **Top Decliners**: Stocks with the biggest negative rank changes
-   - **Return vs. Rank Scatter**: Visualizes the relationship between returns and rankings
+> **Note**: Example visualization outputs can be found in the `docs/img/` directory after running the system once. These provide a preview of the actual charts and reports you'll generate.
 
 #### Data Export Files
-
-Along with the visualizations, the system exports CSV files with the underlying data:
-- `top_performers_YYYYMMDD_HHMMSS.csv`: Detailed data on top-performing stocks
-- `top_improvers_YYYYMMDD_HHMMSS.csv`: Stocks with the biggest ranking improvements
-- `top_decliners_YYYYMMDD_HHMMSS.csv`: Stocks with the biggest ranking declines
+CSV files containing the data used for specific charts might also be exported here (e.g., `top_performers_data.csv`).
 
 #### Interpreting Visualizations
-
-Each chart in the visualization suite is designed to provide insights:
-
-- **Return Distribution**: Look for whether returns are normally distributed or skewed
-- **Top/Bottom Performers**: Identify outliers and extreme performers
-- **Rank Changes**: Spot momentum shifts and trending stocks
-- **Sector Analysis Charts**: Understand sector rotation and relative performance
-
-For detailed examples of how to interpret these visualizations, refer to the HTML index file or the [User Guide](docs/user_guide.md).
+Refer to the HTML index file or the [User Guide](docs/user_guide.md) for guidance on interpreting the generated charts.
 
 ## Troubleshooting Guide
 
 ### Installation Issues
 
-#### Problem: Package installation fails
-**Solution**: Try using a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+*   **Problem**: `pip install -e .` fails with errors related to building wheels (e.g., missing C++ compiler).
+    *   **Solution**: Ensure you have the necessary build tools for your OS. For some packages (like `numpy`, `pandas`), installing pre-built wheels is usually preferred. Check error messages for specific package issues. Using a recent version of `pip` might help (`python -m pip install --upgrade pip`).
 
-#### Problem: Bloomberg API installation fails
-**Solution**: The Bloomberg API requires a special installation process:
-```bash
-# Install the core package first
-pip install -e .
+*   **Problem**: `ModuleNotFoundError: No module named 'blpapi'` when running commands.
+    *   **Solution 1**: Ensure you have activated your virtual environment (`venv\\Scripts\\activate` or `source venv/bin/activate`).
+    *   **Solution 2**: Verify `blpapi` was installed correctly using the Bloomberg index URL *after* activating the venv:
+        ```bash
+        pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+        ```
+        *Note: If the above URL doesn't work, try `https://bloomberg.bintray.com/pip/simple/` as an alternative.*
 
-# Then install Bloomberg API from Bloomberg's own index
-pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
-```
+*   **Problem**: `blpapi` installation fails or connection errors occur during `renaissance-extract`.
+    *   **Solution 1**: **Crucially, ensure the Bloomberg Terminal application is running and you are logged in** *before* running the `pip install blpapi` command or the `renaissance-extract` command.
+    *   **Solution 2**: Check network connectivity to Bloomberg services. Firewalls might block the connection.
+    *   **Solution 3**: Refer to the official Bloomberg API documentation for platform-specific troubleshooting (e.g., environment variables like `BLPAPI_ROOT`, required C++ redistributables on Windows).
 
-Alternatively, you can use our extras feature:
-```bash
-# Install with the notebook and visualization extras (without Bloomberg)
-pip install -e ".[notebook,viz]"
+### Runtime Issues
 
-# Then separately install Bloomberg API as shown above
-```
+*   **Problem**: Command `renaissance-rank` (or other `renaissance-*` commands) not found.
+    *   **Solution 1**: Ensure you have activated your virtual environment where the package was installed.
+    *   **Solution 2**: Verify the package was installed correctly using `pip install -e .`. Check `pip list` for `renaissance-stock-ranking`. If installed, try reinstalling with `pip install --force-reinstall -e .`.
 
-#### Problem: "Module not found" errors
-**Solution**: Make sure you've installed the package properly:
-```bash
-# Basic installation
-pip install -e .
+*   **Problem**: `FileNotFoundError` when running `renaissance-rank` or `renaissance-analyze`.
+    *   **Solution**: Make sure the required input files (e.g., `historical_prices.csv`, `nifty500_list.csv`) exist in the expected input directory (default: `data/`). Run `renaissance-extract` first. If you used `--output-dir` during extraction, you might need to specify the same directory using `--input-dir` (or equivalent options, check `--help`) for the ranking/analysis commands.
 
-# Or with the appropriate extras
-pip install -e ".[bloomberg,notebook,viz,test]"
-```
-
-### Running Scripts Issues
-
-#### Problem: Import errors when running scripts directly
-**Solution**: The scripts are now designed to be run through the package. Use one of these methods:
-
-1. Install the package first, then run the scripts:
-```bash
-pip install -e .
-python scripts/run_ranking.py
-```
-
-2. Use the Python module syntax:
-```bash
-python -m renaissance.cli.main
-python -m renaissance.cli.analyze
-```
-
-3. Use the console entry points (after installation):
-```bash
-renaissance-rank
-renaissance-analyze
-renaissance-visualize
-renaissance-extract
-```
-
-### Data Issues
-
-#### Problem: "File not found" errors
-**Solution**: Ensure data files are in the correct location:
-```bash
-# Check if files exist
-ls -la data/
-```
-
-#### Problem: Missing columns in CSV files
-**Solution**: Verify your files have the required columns:
-```bash
-# View the first few lines of your files
-head -n 5 data/nifty500_list.csv
-head -n 5 data/historical_prices.csv
-```
-
-#### Problem: Empty or incomplete results
-**Solution**: Ensure you have at least 13 months of price data to calculate yearly returns.
-
-### Code Issues
-
-#### Problem: "Logger is not defined" error
-```
-renaissance.cli.main - ERROR - Input data validation failed: name 'logger' is not defined
-```
-
-**Solution**: This occurs when the logger isn't properly initialized in the validate_input_data function. The system has been updated to handle this, but if you encounter this issue:
-
-1. Make sure you're using the latest version from GitHub
-2. Check that the `validate_input_data` function in `renaissance/cli/main.py` includes the logger parameter and proper initialization:
-   ```python
-   def validate_input_data(nifty500_file: str, price_file: str, logger=None) -> bool:
-       # Initialize logger if not provided
-       if logger is None:
-           logger = logging.getLogger(__name__)
-   ```
-3. Update the call to validate_input_data in the main function to pass the logger parameter
-
-#### Problem: Missing output directories
-**Solution**: The system should create output directories automatically, but you can manually create them:
-```bash
-mkdir -p output/visualizations output/sector_analysis output/logs
-```
+*   **Problem**: Incorrect results or unexpected behavior.
+    *   **Solution**: Check the log files in `output/logs/` for detailed error messages or warnings. Ensure input data format matches the requirements documented. Use `--test-mode` with `renaissance-extract` to run with known sample data for comparison.
 
 ## Need More Help?
 
@@ -860,27 +643,34 @@ Here's a quick reference for technical terms used in this documentation:
 - **Dependencies**: External software packages that your project relies on to function
 - **Script**: A file containing Python code that can be executed
 - **Module**: A Python file containing definitions and statements that can be imported and used in other Python files
+- **Package**: A collection of Python modules. This project is structured as an installable package.
+- **CLI (Command-Line Interface)**: Refers to the `renaissance-*` commands accessible after installation.
+- **Entry Point**: A way for an installed package to expose commands directly in the terminal (e.g., `renaissance-rank`).
+- **Extras**: Optional sets of dependencies that can be installed for specific features (e.g., `[viz]`, `[notebook]`).
 
 ## GitHub Deployment Instructions
 
 If you need to deploy this project to your own GitHub repository:
 
-1. Create a new repository on GitHub
+1. Create a new repository on GitHub.
 2. Initialize the local repository (if not already done):
    ```bash
-   git init
+   # Only run git init if you haven't already
+   # git init
    git add .
    git commit -m "Initial commit"
    ```
 3. Add your GitHub repository as remote and push:
    ```bash
-   git remote add origin https://github.com/your-username/Renaissance_Stock_Ranking.git
+   # Replace with your actual repo URL
+   git remote add origin https://github.com/your-username/your-repo-name.git
+   # Ensure your default branch is named 'main' or adjust as needed
    git branch -M main
    git push -u origin main
    ```
 
 ## Author
-Renaissance Investment Managers
+mathamphetamine
 
 ## License
 Proprietary - For use at Renaissance Investment Managers only
