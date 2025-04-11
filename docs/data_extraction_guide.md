@@ -1,6 +1,13 @@
-# Bloomberg Data Extraction Guide
+# Manual Data Extraction Guide
 
-This guide provides detailed, step-by-step instructions for extracting data from the Bloomberg Terminal for the Renaissance Stock Ranking System. It is designed to be accessible even if you have limited Bloomberg Terminal experience.
+This guide provides detailed, step-by-step instructions for **manually** extracting data from the Bloomberg Terminal (using the Terminal interface and the Excel Add-in) for the Renaissance Stock Ranking System. 
+
+**When to Use This Guide:**
+*   If you do not have Bloomberg API access set up.
+*   If the automated `renaissance-extract` command is failing due to API issues.
+*   If you prefer a manual, step-by-step data collection process.
+
+**If you have API access, using the automated `renaissance-extract` command is strongly recommended for speed and accuracy. See the [Bloomberg API Guide](bloomberg_api_guide.md) for instructions.**
 
 ## Table of Contents
 1. [Visual Workflow Overview](#visual-workflow-overview)

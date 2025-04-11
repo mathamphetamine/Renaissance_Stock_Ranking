@@ -4,616 +4,247 @@ This guide explains how to automate data extraction from Bloomberg using the Blo
 
 ## Table of Contents
 1. [Prerequisites](#prerequisites)
-2. [Getting Access to Bloomberg API](#getting-access-to-bloomberg-api)
-3. [Installation and Setup](#installation-and-setup)
-4. [Handling Authentication Securely](#handling-authentication-securely)
-5. [Step-by-Step Guide to Using the API](#step-by-step-guide-to-using-the-api)
-6. [Internal Implementation Details](#internal-implementation-details)
-7. [Enhanced Reliability Features](#enhanced-reliability-features)
-8. [Advanced Features](#advanced-features)
-9. [Test Mode for Development](#test-mode-for-development)
-10. [Performance Considerations](#performance-considerations)
-11. [Troubleshooting Bloomberg API Connection](#troubleshooting-bloomberg-api-connection)
-12. [Setting Up Scheduled Extraction](#setting-up-scheduled-extraction)
-13. [Bloomberg API vs. Manual Extraction](#bloomberg-api-vs-manual-extraction)
-14. [Bloomberg Fields Reference](#bloomberg-fields-reference)
-15. [Advanced Topics](#advanced-topics)
-16. [Need More Help?](#need-more-help)
-17. [References](#references)
+2. [Installation and Setup](#installation-and-setup)
+3. [Using the Automated Extractor](#using-the-automated-extractor)
+4. [Test Mode for Development](#test-mode-for-development)
+5. [Internal Implementation Details](#internal-implementation-details)
+6. [Enhanced Reliability Features](#enhanced-reliability-features)
+7. [Advanced Features (Sector & Metrics)](#advanced-features-sector--metrics)
+8. [Troubleshooting API Connection](#troubleshooting-api-connection)
+9. [Setting Up Scheduled Extraction](#setting-up-scheduled-extraction)
+10. [Bloomberg API vs. Manual Extraction](#bloomberg-api-vs-manual-extraction)
+11. [Bloomberg Fields Reference](#bloomberg-fields-reference)
+12. [Need More Help?](#need-more-help)
 
 ## Prerequisites
 
 Before you can use the Bloomberg API integration, you need:
 
-- **Bloomberg Terminal** installed with an active subscription
-- **Bloomberg Desktop API (DAPI)** installed on the same machine
-- **Python 3.8 or higher** installed on your system
-- Network access to Bloomberg services (usually via your company network)
+- **Bloomberg Terminal**: Installed with an active subscription, running, and logged in.
+- **Bloomberg Desktop API (DAPI)**: Installed on the same machine (usually part of the Terminal install or available via `WAPI <GO>`).
+- **Python**: Version 3.8 or higher installed.
+- **Renaissance Stock Ranking System**: Cloned and set up (virtual environment activated).
+- **`blpapi` Python Package**: Installed within the activated virtual environment (see below).
+- **Network Access**: To Bloomberg services.
 
-## Getting Access to Bloomberg API
+## Installation and Setup
 
-### Step 1: Verify Your Bloomberg Terminal Access
+Follow these steps within your activated virtual environment for the Renaissance project:
 
-1. Ensure you have a valid Bloomberg Terminal license
-2. Log in to your Bloomberg Terminal with your credentials
-3. Verify that your subscription includes API access (most professional subscriptions do)
+1.  **Install the Core Package (if not already done):**
+    ```bash
+    pip install -e .
+    ```
 
-### Step 2: Install the Bloomberg Desktop API
+2.  **Install the `blpapi` Python Package:**
+    *   **Ensure Bloomberg Terminal is running and logged in.**
+    *   Run the following command:
+    ```bash
+    pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
+    ```
+    *   *(Note: This package cannot be included directly in our `setup.py` because it's hosted on Bloomberg's private index, not PyPI).*
 
-1. On your Bloomberg Terminal, type `WAPI <GO>`
-2. Click on "API Software Download Center"
-3. Download the appropriate Desktop API installer for your operating system
-4. Follow the installation instructions in the Bloomberg installer
-5. During installation, when prompted, select "typical" installation
-6. Verify installation by checking for the "Bloomberg" service in your system services
+3.  **Verify Installation (Optional but Recommended):**
+    Create a simple Python script (`test_blpapi.py`):
+    ```python
+    import blpapi
+    import time
 
-### Step 3: Install the Renaissance Stock Ranking System and Bloomberg Python API
+    print("Attempting to connect to Bloomberg...")
+    session_options = blpapi.SessionOptions()
+    session_options.setServerHost('localhost')
+    session_options.setServerPort(8194) # Default DAPI port
 
-#### 3.1 Install Our Package First
+    session = blpapi.Session(session_options)
+    if not session.start():
+        print("ERROR: Failed to start session. Is Bloomberg Terminal running and logged in?")
+        exit(1)
+    
+    print("SUCCESS: Session started.")
 
-```bash
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+    if not session.openService("//blp/refdata"):
+        print("ERROR: Failed to open //blp/refdata service.")
+        session.stop()
+        exit(1)
 
-# Install the Renaissance Stock Ranking System
-pip install -e .
-```
+    print("SUCCESS: //blp/refdata service opened.")
+    print("Bloomberg API connection successful!")
 
-#### 3.2 Install the Bloomberg Python API
+    session.stop()
+    print("Session stopped.")
+    ```
+    Run it from your activated virtual environment:
+    ```bash
+    python test_blpapi.py
+    ```
+    A successful run will print connection success messages.
 
-After installing our package, you need to install the Bloomberg Python API:
+## Using the Automated Extractor
 
-```bash
-# Install directly from Bloomberg's servers
-pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
-```
+Once `blpapi` is installed, you can use the `renaissance-extract` command to fetch data.
 
-Alternatively, if you want to install other optional components as well:
+### Step 1: Ensure Bloomberg Terminal is Running
+Make sure you are logged into your Bloomberg Terminal session.
 
-```bash
-# Install the package with visualization and notebook support
-pip install -e ".[viz,notebook]"
+### Step 2: Run the Extractor Command
 
-# Then install the Bloomberg API separately (it can't be included directly)
-pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
-```
-
-> **Note:** We cannot include the Bloomberg API as a standard dependency in our package because it must be installed from Bloomberg's servers rather than PyPI. This is why it needs to be installed separately.
-
-### Step 4: Verify Your Installation
-
-Create a simple test script to verify that your Bloomberg API connection works:
-
-```python
-import blpapi
-import time
-
-# Set up session options
-session_options = blpapi.SessionOptions()
-session_options.setServerHost('localhost')
-session_options.setServerPort(8194)  # Default Bloomberg API port
-
-# Create and start a session
-session = blpapi.Session(session_options)
-if not session.start():
-    print("Failed to start session. Is Bloomberg running?")
-    exit(1)
-
-print("Successfully connected to Bloomberg!")
-time.sleep(2)  # Keep the session alive briefly
-session.stop()
-```
-
-Save this as `test_bloomberg.py` and run it. If successful, you should see "Successfully connected to Bloomberg!"
-
-## Handling Authentication Securely
-
-### Bloomberg Terminal Authentication
-
-The Bloomberg API uses your already authenticated Bloomberg Terminal session for access. This means:
-
-1. **No API keys are needed** in your code – authentication is handled via your logged-in Terminal
-2. **No passwords should be stored** in your scripts or configuration files
-3. Your access is tied to your Bloomberg Terminal login credentials
-
-### Important Security Considerations
-
-1. **Never hardcode any Bloomberg credentials** in your scripts
-2. **Always ensure your Bloomberg Terminal is properly secured** with password protection
-3. **Log out of your Bloomberg Terminal** when not in use
-4. Do not share scripts that might contain any credential information
-5. Consider using environment variables if you need to customize connection parameters
-
-### For Multi-User Environments
-
-If multiple users need to access the Bloomberg API:
-
-1. Consider using Bloomberg Server API (B-PIPE) instead of Desktop API
-2. Set up proper access controls for shared scripts
-3. Implement logging to track who is making API requests
-
-## Step-by-Step Guide to Using the API with Our System
-
-### Step 1: Ensure Prerequisites Are Met
-
-1. Verify your Bloomberg Terminal is running and logged in
-2. Make sure you've installed all required software (see Prerequisites section)
-3. Confirm that Python and the `blpapi` package are installed
-4. Ensure your terminal/command prompt has access to the Renaissance Stock Ranking System
-
-### Step 2: Understand the Data Extraction Process
-
-Our system extracts three types of data from Bloomberg:
-
-1. **NIFTY 500 constituent list** with ISINs, company names, tickers, and sectors
-2. **Historical monthly prices** for all constituents, adjusted for corporate actions
-3. **Financial metrics** including P/E ratio, P/B ratio, ROE, etc. (optional)
-
-### Step 3: Run the Bloomberg Extractor
-
-There are multiple ways to run the Bloomberg data extractor:
-
-#### Option A: Using the Command Line Interface
+Navigate to your project directory in the terminal (with the virtual environment activated) and run:
 
 ```bash
-# Activate your virtual environment first
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Method 1: Using the convenience script
-python scripts/extract_bloomberg.py
-
-# Method 2: Using the installed CLI tool
 renaissance-extract
-
-# Method 3: Using Python module syntax
-python -m renaissance.cli.extract
 ```
 
-All methods support the same command-line options:
+This command will:
+1.  Connect to the Bloomberg API.
+2.  Fetch the NIFTY 500 constituent list (including ISIN, Name, Ticker, Sector).
+3.  Fetch historical monthly adjusted closing prices for all constituents.
+4.  Fetch key financial metrics (P/E, P/B, ROE, etc.).
+5.  Save the data into three CSV files in the `data/` directory (by default):
+    *   `nifty500_list.csv`
+    *   `historical_prices.csv`
+    *   `financial_metrics.csv`
 
+### Command Options
+
+*   `--output-dir <path>`: Specify a different directory to save the output CSV files.
+*   `--start-date YYYY-MM-DD`: Set a custom start date for historical price data (default is 15 years ago).
+*   `--end-date YYYY-MM-DD`: Set a custom end date (default is today).
+*   `--test-mode`: Run without connecting to Bloomberg, using sample data (see next section).
+*   `--help`: Display all available options.
+
+**Example with Options:**
 ```bash
-# Customize the date range
-renaissance-extract --start-date 2018-01-01 --end-date 2023-12-31
-
-# Specify a different output directory
-renaissance-extract --output-dir custom_data_folder
-
-# Run in test mode (no Bloomberg connection needed)
-renaissance-extract --test-mode
+renaissance-extract --output-dir ./bloomberg_data --start-date 2015-01-01
 ```
 
-#### Option B: Using the Python API in Your Own Scripts
-
-```python
-from renaissance.data_extraction.bloomberg_data_extractor import main as extractor_main
-import sys
-
-# Run the extractor with custom arguments
-sys.argv = [
-    'extractor',  # Program name (not used)
-    '--start-date', '2018-01-01',
-    '--end-date', '2023-12-31',
-    '--output-dir', 'custom_data_folder'
-]
-extractor_main()
-```
-
-Or if you need more control over individual steps:
-
-```python
-from renaissance.data_extraction.bloomberg_data_extractor import (
-    get_nifty500_constituents, 
-    get_historical_prices, 
-    get_additional_metrics
-)
-import datetime
-import os
-
-# Get NIFTY 500 constituents
-constituents_df = get_nifty500_constituents()
-
-# Get historical prices
-start_date = datetime.datetime(2018, 1, 1).date()
-end_date = datetime.datetime.now().date()
-prices_df = get_historical_prices(constituents_df["ISIN"].tolist(), start_date, end_date)
-
-# Get financial metrics (optional)
-metrics_df = get_additional_metrics(constituents_df["ISIN"].tolist())
-
-# Create output directory if it doesn't exist
-os.makedirs("data", exist_ok=True)
-
-# Save data to files
-constituents_df.to_csv("data/nifty500_list.csv", index=False)
-prices_df.to_csv("data/historical_prices.csv", index=False)
-metrics_df.to_csv("data/financial_metrics.csv", index=False)
-```
-
-### Step 4: Verify the Extracted Data
-
-After running the extraction, check that the following files were created:
-
-1. `data/nifty500_list.csv` - Should contain ~500 stocks with ISINs, names, tickers, and sectors
-2. `data/historical_prices.csv` - Should contain monthly price data for all constituents
-3. `data/financial_metrics.csv` - Should contain financial metrics for all constituents
-
+### Alternative: Using the Script
+You can achieve the same result by running the script directly:
 ```bash
-# Quick check of the extracted files
-head -n 5 data/nifty500_list.csv
-head -n 5 data/historical_prices.csv
-head -n 5 data/financial_metrics.csv
-
-# Count the number of records
-wc -l data/nifty500_list.csv
-wc -l data/historical_prices.csv
-```
-
-### Step 5: Run the Stock Ranking System with the Extracted Data
-
-Once you have verified the data, you can run the stock ranking system:
-
-```bash
-# Run the main ranking system using the extracted data
-python scripts/run_ranking.py
-
-# Generate visualizations
-python scripts/visualize_results.py
-
-# Analyze sectors (uses the sector information from Bloomberg)
-python scripts/analyze_sectors.py
-```
-
-## Internal Implementation Details
-
-The `scripts/extract_bloomberg.py` script is a convenient wrapper around the Renaissance Stock Ranking System's Bloomberg extraction functionality. Under the hood, it uses the following implementation:
-
-```python
-# Example of the core extraction functionality
-def get_nifty500_constituents(test_mode=False):
-    """
-    Get the current NIFTY 500 constituents with sector information using Bloomberg API.
-    
-    Args:
-        test_mode (bool): If True, returns sample test data without calling Bloomberg API
-    
-    Returns:
-        pd.DataFrame: DataFrame with ISIN, Name, Ticker, and Sector columns
-    """
-    # Implementation details...
-    session = blpapi.Session(SESSION_OPTIONS)
-    # ... Bloomberg API connection logic ...
-    
-    request = refDataService.createRequest("ReferenceDataRequest")
-    request.append("securities", "NIFTY 500 Index")
-    request.append("fields", "INDX_MWEIGHT_HIST")
-    request.append("fields", "GICS_SECTOR_NAME")  # Add sector classification
-    
-    # ... Request processing and data extraction ...
-    
-    # Create DataFrame with ISIN, Name, Ticker, and Sector
-    df = pd.DataFrame(constituents)
-    logger.info(f"Retrieved {len(df)} NIFTY 500 constituents")
-    
-    return df
-```
-
-## Enhanced Reliability Features
-
-Our Bloomberg extraction module includes several features to improve reliability:
-
-### Automatic Retries
-
-The system automatically retries Bloomberg API requests up to 3 times if connection issues occur:
-
-```python
-max_attempts = 3
-attempt = 0
-
-while attempt < max_attempts:
-    attempt += 1
-    try:
-        session = blpapi.Session(SESSION_OPTIONS)
-        if not session.start():
-            logger.error(f"Failed to start Bloomberg API session (attempt {attempt}/{max_attempts})")
-            if attempt == max_attempts:
-                raise Exception("Failed to start Bloomberg API session after multiple attempts")
-            time.sleep(5)  # Wait before retrying
-            continue
-        
-        # Rest of the connection logic...
-        
-    except Exception as e:
-        logger.error(f"Error in attempt {attempt}/{max_attempts}: {str(e)}")
-        if attempt == max_attempts:
-            raise
-        else:
-            logger.info(f"Retrying in 5 seconds...")
-            time.sleep(5)
-```
-
-### Timeout Handling
-
-API requests have timeout mechanisms to prevent hanging indefinitely:
-
-```python
-timeout_seconds = 60
-start_time = time.time()
-
-while True:
-    # Check for timeout
-    if time.time() - start_time > timeout_seconds:
-        raise Exception(f"Bloomberg API request timed out after {timeout_seconds} seconds")
-    
-    ev = session.nextEvent(500)  # 500ms timeout per event
-    # Process events...
-    
-    if ev.eventType() == blpapi.Event.RESPONSE:
-        break
-```
-
-### Batch Processing
-
-Data is retrieved in batches to avoid overwhelming the Bloomberg API:
-
-```python
-# Process ISINs in batches of 50 to avoid overwhelming the API
-batch_size = 50
-for i in range(0, len(isins), batch_size):
-    batch_isins = isins[i:i+batch_size]
-    logger.info(f"Processing batch {i//batch_size + 1}/{(len(isins) + batch_size - 1)//batch_size}")
-    
-    # Process this batch...
-```
-
-### Error Recovery
-
-If sector information or financial metrics cannot be retrieved, the system continues with core functionality:
-
-```python
-try:
-    metrics_df = get_additional_metrics(nifty500_df["ISIN"].tolist(), test_mode=args.test_mode)
-    if len(metrics_df.columns) > 1:  # If we have more than just ISIN column
-        metrics_file = os.path.join(args.output_dir, "financial_metrics.csv")
-        metrics_df.to_csv(metrics_file, index=False)
-        logger.info(f"Saved additional financial metrics to {metrics_file}")
-except Exception as e:
-    logger.warning(f"Could not retrieve additional financial metrics: {str(e)}")
-    logger.info("Continuing without financial metrics")
-```
-
-## Advanced Features
-
-### Sector Information
-
-The Bloomberg API integration automatically retrieves sector information using the GICS (Global Industry Classification Standard) sector classification. This allows you to:
-
-1. Analyze performance by sector
-2. Identify sector trends
-3. Compare stocks within their respective sectors
-4. Diversify your portfolio across sectors
-
-The sector information is added directly to the `nifty500_list.csv` file as an additional column.
-
-### Financial Metrics
-
-In addition to price data, the system retrieves key financial metrics for each stock:
-
-1. **Price-to-Earnings Ratio (PE_Ratio)**: Indicates how much investors are willing to pay for each rupee of earnings
-2. **Price-to-Book Ratio (PB_Ratio)**: Compares a company's market value to its book value
-3. **Return on Equity (ROE)**: Measures a company's profitability relative to shareholders' equity
-4. **Debt-to-Asset Ratio (DebtToAsset)**: Indicates what proportion of a company's assets are financed by debt
-5. **Dividend Yield (DividendYield)**: Annual dividend payments relative to share price
-
-These metrics are saved to a separate file called `financial_metrics.csv` in your output directory.
-
-### Using Financial Metrics in Analysis
-
-You can use these financial metrics to enhance your stock analysis:
-
-```python
-import pandas as pd
-
-# Load rankings and financial metrics
-rankings = pd.read_csv('output/NIFTY500_Rankings_20240301.csv')
-metrics = pd.read_csv('output/financial_metrics.csv')
-
-# Merge the data
-combined = pd.merge(rankings, metrics, on='ISIN')
-
-# Example: Find high-return stocks with reasonable valuations
-value_growth = combined[
-    (combined['YearlyReturn'] > 20) &  # High return
-    (combined['PE_Ratio'] < 25) &      # Reasonable PE ratio
-    (combined['DebtToAsset'] < 0.5)    # Low debt
-]
-
-print("Top value-growth stocks:")
-print(value_growth[['Name', 'YearlyReturn', 'PE_Ratio', 'ROE', 'DebtToAsset']].head(10))
+python scripts/extract_bloomberg.py --output-dir ./bloomberg_data
 ```
 
 ## Test Mode for Development
 
-For development or testing without Bloomberg access, use the built-in test mode:
+If you don't have Bloomberg access or want to test the rest of the system workflow without making live API calls, use the `--test-mode` flag:
 
 ```bash
-python scripts/extract_bloomberg.py --test-mode
+renaissance-extract --test-mode
 ```
 
-Test mode will:
-- Generate realistic sample data for ~10 stocks
-- Create appropriate test files in your output directory
-- Allow you to test the rest of the system without Bloomberg access
+This will:
+- **Skip** all Bloomberg API connections.
+- Generate **sample** `nifty500_list.csv`, `historical_prices.csv`, and `financial_metrics.csv` files in the output directory (default: `data/`).
+- Allow you to proceed with `renaissance-rank`, `renaissance-analyze`, and `renaissance-visualize` using consistent sample data.
 
-Implementation details:
+This mode is crucial for development, testing, and users without a Bloomberg license.
 
-```python
-if test_mode:
-    logger.info("TEST MODE: Using sample NIFTY 500 data instead of Bloomberg API")
-    sample_data = [
-        {"ISIN": "INE009A01021", "Name": "Infosys Ltd", "Ticker": "INFO:IN", "Sector": "Information Technology"},
-        {"ISIN": "INE062A01020", "Name": "Tata Consultancy Services Ltd", "Ticker": "TCS:IN", "Sector": "Information Technology"},
-        # ... more sample data ...
-    ]
-    return pd.DataFrame(sample_data)
-```
+## Internal Implementation Details
 
-## Performance Considerations
+The core logic resides in `renaissance/data_extraction/bloomberg_data_extractor.py`. Key functions involved:
 
-### Connection Efficiency
+*   `get_nifty500_constituents()`: Fetches the index members and sector data.
+*   `get_historical_prices()`: Fetches adjusted monthly closing prices.
+*   `get_additional_metrics()`: Fetches financial ratios.
+*   `main()`: Orchestrates the process, handles arguments, and calls the other functions.
 
-The system optimizes Bloomberg API usage by:
+These functions use the `blpapi` package to:
+1.  Establish a session with the local Bloomberg DAPI.
+2.  Open the reference data service (`//blp/refdata`).
+3.  Create and send appropriate requests (`ReferenceDataRequest`, `HistoricalDataRequest`).
+4.  Parse the responses and format the data into pandas DataFrames.
 
-1. Reusing session connections where possible
-2. Requesting multiple data fields in a single request
-3. Processing data in batches of appropriate size
-4. Releasing Bloomberg resources promptly
+## Enhanced Reliability Features
 
-### Data Volume Management
+*   **Conditional Import**: `blpapi` is imported only when *not* in `--test-mode`, preventing errors if the package isn't installed for test runs.
+*   **Automatic Retries**: Connection attempts and requests are retried automatically (up to 3 times with delays) if transient network issues occur.
+*   **Timeout Handling**: API requests include timeouts to prevent indefinite hangs.
+*   **Batch Processing**: Historical data and metrics requests are processed in batches (e.g., 50 securities at a time) to avoid overloading the API.
+*   **Error Recovery**: If fetching optional data like financial metrics fails, the process logs a warning and continues, allowing the core price and constituent data to still be saved.
 
-When working with the full NIFTY 500 index and many years of historical data, if you experience performance issues:
+## Advanced Features (Sector & Metrics)
 
-1. Consider reducing the date range (e.g., 5 years instead of 15)
-2. Focus on a subset of stocks if you only need specific sectors
-3. Increase batch timeout values if you're on a slower network connection
+*   **Sector Information**: The extractor automatically retrieves GICS sector names (`GICS_SECTOR_NAME`) and includes them in `nifty500_list.csv`. This is used by `renaissance-analyze`.
+*   **Financial Metrics**: Key ratios (P/E, P/B, ROE, Debt/Asset, Dividend Yield) are fetched and saved to `financial_metrics.csv`. `renaissance-analyze` can use this file to provide richer sector comparisons.
 
-## Troubleshooting Bloomberg API Connection
+## Troubleshooting API Connection
 
-### Common Issues and Solutions
+*(Referenced from main README and User Guide, consolidated here)*
 
-#### 1. "Failed to start Bloomberg API session"
+*   **Problem**: `ModuleNotFoundError: No module named 'blpapi'`
+    *   **Solution**: Ensure virtual environment is active and `blpapi` was installed correctly via `pip install --index-url=... blpapi`.
 
-**Solution:**
-- Ensure the Bloomberg Terminal is running and logged in
-- Verify that the Bloomberg Desktop API is installed
-- Check your network connection to the Bloomberg service
+*   **Problem**: `Failed to start session` / `Failed to open //blp/refdata service` / Connection errors.
+    *   **Solution 1**: **CRITICAL**: Ensure Bloomberg Terminal is running and you are **logged in**.
+    *   **Solution 2**: Verify `blpapi` package installed correctly (Step 3 in Installation).
+    *   **Solution 3**: Check network connectivity / firewalls.
+    *   **Solution 4**: Restart Bloomberg Terminal.
+    *   **Solution 5**: Ensure DAPI service is running (check system services or `WAPI <GO>`).
+    *   **Solution 6**: Consult official Bloomberg API documentation / Help Desk (`HELP HELP` on Terminal).
 
-**Commands to verify:**
-```bash
-# On Windows
-sc query "Bloomberg"
+*   **Problem**: Data retrieval is slow or times out.
+    *   **Solution**: Check network speed. Run during off-peak hours. Potentially reduce date range if requesting very long histories.
 
-# On macOS/Linux
-ps aux | grep -i bloomberg
-```
-
-#### 2. "No Bloomberg Service found"
-
-**Solution:**
-- Check that you're running on a machine with Bloomberg Terminal
-- Bloomberg Terminal might need to be restarted
-- Try logging out and back in to the Terminal
-
-#### 3. Data Retrieval is Very Slow
-
-**Solution:**
-- Reduce the date range for historical data
-- Process in smaller batches (adjust batch_size in the code)
-- Check your network connection speed
-- Run during off-peak hours
-
-#### 4. Missing Sector Information
-
-**Solution:**
-- Some stocks may not have GICS sector classification in Bloomberg
-- The system will mark these as "Unknown" sector
-- You can manually update the sector information in the output file
-
-#### 5. Authentication Issues
-
-**Solution:**
-- Make sure you're logged into your Bloomberg Terminal
-- Check your Bloomberg Terminal permissions with your administrator
-- Bloomberg API uses the same authentication as your Terminal session
+*   **Problem**: Missing data for some stocks/fields.
+    *   **Solution**: Data may genuinely not be available in Bloomberg for that specific security/field/date range. The extractor attempts to handle missing fields gracefully.
 
 ## Setting Up Scheduled Extraction
 
-For regular updates, you can set up the Bloomberg data extractor to run automatically:
+To automate monthly data updates:
 
-### On Windows:
-1. Create a batch file (e.g., `run_extractor.bat`) with the command:
-   ```
-   @echo off
-   cd C:\path\to\Renaissance_Stock_Ranking
-   call venv\Scripts\activate
-   python scripts/extract_bloomberg.py
-   ```
+1.  **Create a Script**: Write a simple shell script (`.sh` for Linux/macOS) or batch file (`.bat` for Windows) that activates the virtual environment and runs `renaissance-extract`.
 
-2. Use Windows Task Scheduler to run this batch file on your desired schedule.
+    *Example (`run_extractor.sh`):*
+    ```bash
+    #!/bin/bash
+    # Navigate to the project directory
+    cd /path/to/Renaissance_Stock_Ranking
+    # Activate virtual environment
+    source venv/bin/activate
+    # Run the extractor (ensure Bloomberg is running!)
+    renaissance-extract --output-dir ./data # Ensure output goes to the right place
+    # Optional: Deactivate environment
+    # deactivate
+    ```
 
-### On macOS/Linux:
-1. Create a shell script (e.g., `run_extractor.sh`) with the command:
-   ```bash
-   #!/bin/bash
-   cd /path/to/Renaissance_Stock_Ranking
-   source venv/bin/activate
-   python scripts/extract_bloomberg.py
-   ```
+2.  **Schedule the Script**: Use your operating system's task scheduler:
+    *   **Windows**: Task Scheduler
+    *   **macOS/Linux**: `cron`
 
-2. Make the script executable:
-   ```bash
-   chmod +x run_extractor.sh
-   ```
+    *Example `crontab` entry (runs 6 PM on the first Friday of the month):*
+    ```
+    0 18 * * 5 [ $(date +\%u) -eq 5 ] && /path/to/run_extractor.sh > /path/to/extractor.log 2>&1
+    ```
 
-3. Add a crontab entry to run the script on your desired schedule:
-   ```
-   0 18 * * 5 /path/to/run_extractor.sh
-   ```
-   (This example runs the script at 6 PM every Friday)
+    **Important**: Scheduled tasks running `renaissance-extract` still require the Bloomberg Terminal to be running and logged in on the machine at the scheduled time.
 
 ## Bloomberg API vs. Manual Extraction
 
-| Aspect | Bloomberg API | Manual Extraction |
-|--------|--------------|-------------------|
-| **Speed** | Much faster, especially for large datasets | Slow and labor-intensive |
-| **Accuracy** | Reduces human error | Prone to copy-paste errors |
-| **Automation** | Can be scheduled to run automatically | Requires manual intervention |
-| **Learning Curve** | Requires programming knowledge | Simple but tedious |
-| **Flexibility** | Can customize fields and calculation | Limited to Excel functions |
+| Feature         | Bloomberg API (`renaissance-extract`) | Manual Extraction (Excel Add-in / Terminal) |
+| :-------------- | :------------------------------------ | :------------------------------------------ |
+| **Speed**       | Fast, automated                       | Slow, manual                                |
+| **Accuracy**    | High (programmatic)                   | Prone to copy/paste errors                  |
+| **Consistency** | High                                  | Variable                                    |
+| **Effort**      | Low (after initial setup)             | High (repetitive monthly task)              |
+| **Automation**  | Fully scriptable, schedulable         | Manual process required                     |
+| **Features**    | Includes Sectors & Financial Metrics  | Requires extra manual steps for these       |
+| **Requirement** | `blpapi` installed, Terminal running  | Bloomberg Terminal access                   |
+| **Manual Extraction**: Provides detailed steps for exporting data manually from Bloomberg Terminal and Excel if API access is unavailable or problematic. See [Manual Data Extraction Guide](data_extraction_guide.md).
+
+**Recommendation**: Use the API method (`renaissance-extract`) whenever possible for efficiency and accuracy.
 
 ## Bloomberg Fields Reference
 
-The extraction functionality uses these Bloomberg fields:
+Key fields used by `renaissance-extract`:
 
-- `INDX_MWEIGHT_HIST`: Index members weight history
-- `PX_LAST`: Last price
-- `ID_ISIN`: ISIN code
-- `NAME`: Company name
-- `TICKER`: Bloomberg ticker
-- `GICS_SECTOR_NAME`: Sector classification
-- `PE_RATIO`: Price-to-earnings ratio
-- `PX_TO_BOOK_RATIO`: Price-to-book ratio
-- `RETURN_COM_EQY`: Return on equity
-- `TOT_DEBT_TO_TOT_ASSET`: Debt-to-asset ratio
-- `EQY_DVD_YLD_IND`: Dividend yield
+*   **Constituents**: `INDX_MWEIGHT_HIST` (Members), `ID_ISIN` (ISIN), `NAME` (Name), `TICKER` (Ticker), `GICS_SECTOR_NAME` (Sector)
+*   **Prices**: `PX_LAST` (Adjusted Closing Price)
+*   **Metrics**: `PE_RATIO`, `PX_TO_BOOK_RATIO`, `RETURN_COM_EQY`, `TOT_DEBT_TO_TOT_ASSET`, `EQY_DVD_YLD_IND`
 
-For other useful fields, consult the Bloomberg API documentation or use the FLDS <GO> command in the Bloomberg Terminal.
-
-## Advanced Topics
-
-### Using the Bloomberg Server API
-
-For enterprise deployments, you might want to use the Bloomberg Server API (B-PIPE) instead of the Desktop API (DAPI). This allows multiple users to access Bloomberg data through a centralized server.
-
-### Working with Multiple Indices
-
-To extract data for multiple indices (not just NIFTY 500), you can modify the extraction function to accept an index parameter.
-
-### Adding More Data Fields
-
-You can extract additional data fields by modifying the module to include more Bloomberg fields in the API requests.
+Use `FLDS <GO>` on the Bloomberg Terminal to search for other available fields.
 
 ## Need More Help?
 
-If you encounter any issues with the Bloomberg API integration:
-
-1. Check the application logs in `bloomberg_extractor.log`
-2. Contact your Bloomberg Terminal administrator
-3. Reach out to Bloomberg API support via your Terminal (HELP 4 <GO>)
-4. For Renaissance Stock Ranking System specific issues, refer to our documentation
-
-## References
-
-- [Bloomberg API Developer's Guide](https://data.bloomberglp.com/professional/sites/10/2017/03/BLPAPI-Core-Developer-Guide.pdf)
-- [Python API Documentation](https://bloomberg.github.io/blpapi-docs/python/3.13/)
-- Bloomberg Terminal Help: type HELP <GO> on your Bloomberg Terminal
+- Check the extractor logs: `output/logs/bloomberg_extractor.log`
+- Refer to the main [Troubleshooting Guide](#troubleshooting-api-connection).
+- Consult the official Bloomberg API documentation.
+- Contact Bloomberg support via the Terminal (`HELP HELP`).
