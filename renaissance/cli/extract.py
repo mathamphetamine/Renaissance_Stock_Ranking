@@ -9,44 +9,20 @@ Usage:
 """
 
 import sys
-import argparse
-from renaissance.data_extraction.bloomberg_data_extractor import parse_arguments, get_nifty500_constituents, get_historical_prices, get_financial_metrics
+# Remove incorrect/unused imports
+# from renaissance.data_extraction.bloomberg_data_extractor import parse_arguments, get_nifty500_constituents, get_historical_prices, get_financial_metrics
+
+# Import the main function from the actual extractor script
+from renaissance.data_extraction.bloomberg_data_extractor import main as extractor_main
 
 
 def main():
     """Main entry point for the Bloomberg data extraction CLI."""
-    args = parse_arguments()
-    
-    try:
-        print("Starting Bloomberg data extraction...")
-        
-        # Get NIFTY 500 constituents
-        print("Extracting NIFTY 500 constituents...")
-        constituents_df = get_nifty500_constituents(test_mode=args.test_mode)
-        
-        # Get historical prices
-        print("Extracting historical prices...")
-        get_historical_prices(
-            constituents_df, 
-            args.output_dir, 
-            args.start_date, 
-            args.end_date, 
-            test_mode=args.test_mode
-        )
-        
-        # Get financial metrics if not in test mode
-        if not args.test_mode:
-            print("Extracting financial metrics...")
-            get_financial_metrics(constituents_df, args.output_dir)
-        
-        print("\nBloomberg data extraction completed successfully.")
-        print(f"Results saved to {args.output_dir}")
-        return 0
-    
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return 1
+    # Directly call the main function from the extractor module,
+    # which handles argument parsing, orchestration, and error handling.
+    return extractor_main()
 
 
 if __name__ == "__main__":
+    # Use the return value from main as the exit code
     sys.exit(main()) 
