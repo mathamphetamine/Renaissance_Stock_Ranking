@@ -81,6 +81,9 @@ env/
 # VSCode project settings
 .vscode/
 
+# Legacy / Generated files
+requirements.txt
+
 # Project specific
 output/
 *.log

@@ -32,7 +32,7 @@ Before you can use the Bloomberg API integration, you need:
 Follow these steps within your activated virtual environment for the Renaissance project:
 
 1.  **Install the Core Package (if not already done):**
-    ```bash
+```bash
     pip install -e .
     ```
 
@@ -46,20 +46,20 @@ Follow these steps within your activated virtual environment for the Renaissance
 
 3.  **Verify Installation (Optional but Recommended):**
     Create a simple Python script (`test_blpapi.py`):
-    ```python
-    import blpapi
-    import time
+```python
+import blpapi
+import time
 
     print("Attempting to connect to Bloomberg...")
-    session_options = blpapi.SessionOptions()
-    session_options.setServerHost('localhost')
+session_options = blpapi.SessionOptions()
+session_options.setServerHost('localhost')
     session_options.setServerPort(8194) # Default DAPI port
 
-    session = blpapi.Session(session_options)
-    if not session.start():
+session = blpapi.Session(session_options)
+if not session.start():
         print("ERROR: Failed to start session. Is Bloomberg Terminal running and logged in?")
-        exit(1)
-    
+    exit(1)
+
     print("SUCCESS: Session started.")
 
     if not session.openService("//blp/refdata"):
@@ -70,7 +70,7 @@ Follow these steps within your activated virtual environment for the Renaissance
     print("SUCCESS: //blp/refdata service opened.")
     print("Bloomberg API connection successful!")
 
-    session.stop()
+session.stop()
     print("Session stopped.")
     ```
     Run it from your activated virtual environment:
@@ -194,12 +194,12 @@ To automate monthly data updates:
 1.  **Create a Script**: Write a simple shell script (`.sh` for Linux/macOS) or batch file (`.bat` for Windows) that activates the virtual environment and runs `renaissance-extract`.
 
     *Example (`run_extractor.sh`):*
-    ```bash
-    #!/bin/bash
+   ```bash
+   #!/bin/bash
     # Navigate to the project directory
-    cd /path/to/Renaissance_Stock_Ranking
+   cd /path/to/Renaissance_Stock_Ranking
     # Activate virtual environment
-    source venv/bin/activate
+   source venv/bin/activate
     # Run the extractor (ensure Bloomberg is running!)
     renaissance-extract --output-dir ./data # Ensure output goes to the right place
     # Optional: Deactivate environment

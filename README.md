@@ -191,12 +191,9 @@ Renaissance_Stock_Ranking/
 │   └── visualization/     # Visualization modules
 ├── scripts/               # Convenience scripts for users
 ├── tests/                 # Test scripts
-├── install.sh             # Installation script for macOS/Linux (Legacy - See Installation Guide)
-├── install.bat            # Installation script for Windows (Legacy - See Installation Guide)
 ├── README.md              # This file
 ├── setup.py               # Package installation configuration
 ├── pyproject.toml         # Modern Python packaging configuration
-└── requirements.txt       # Python dependencies (Legacy - See Installation Guide)
 ```
 
 ## Input Data Requirements
@@ -303,9 +300,13 @@ Follow these steps to set up the Renaissance Stock Ranking System on your machin
         ```bash
         pip install -e ".[test]"
         ```
-    *   To install *all* optional dependencies (excluding `blpapi`):
+    *   For all development dependencies (includes viz, notebook, test):
         ```bash
-        pip install -e ".[viz,notebook,test]"
+        pip install -e ".[dev]"
+        ```
+    *   To install a specific combination (excluding `blpapi`):
+        ```bash
+        pip install -e ".[viz,notebook,test]" # Example combination
         ```
 
 *(Note: This `pip install .` approach uses `setup.py` for robust dependency management and is preferred over using the legacy `requirements.txt` or `install.sh`/`.bat` scripts).*
@@ -329,7 +330,7 @@ Add `--help` to any command for more options (e.g., `renaissance-rank --help`).
 
 ### 2. Using Convenience Scripts (Alternative)
 
-If you prefer not to install the package using `pip install -e .`, you can run Python scripts directly from the `scripts/` directory (ensure dependencies are installed, e.g., via `pip install -r requirements.txt`, though this is legacy):
+If you prefer not to install the package using `pip install -e .`, you can run Python scripts directly from the `scripts/` directory (ensure the package and its dependencies, including any needed extras, have been installed first using the steps above):
 
 *   **Extract Data**:
     *   Live Bloomberg Data: `python scripts/extract_bloomberg.py`

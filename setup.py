@@ -7,18 +7,18 @@ for command-line scripts.
 
 from setuptools import setup, find_packages
 
-# Read requirements from requirements.txt, filtering out comments and blanks
-# Note: This is a simplified approach; a more robust one might handle different markers
-# or specific version specifiers differently.
-core_reqs = []
-with open('requirements.txt') as f:
-    for line in f:
-        line = line.strip()
-        if line and not line.startswith('#'):
-            # We only add core dependencies here. Others are optional or dev.
-            # Based on requirements.txt structure:
-            if any(pkg in line for pkg in ['pandas', 'numpy', 'matplotlib', 'seaborn', 'openpyxl', 'xlrd']):
-                 core_reqs.append(line)
+# Define core dependencies directly
+# Versions should match those previously confirmed in requirements.txt
+core_reqs = [
+    'pandas==2.0.3',
+    'numpy==1.24.3',
+    'matplotlib==3.7.2',
+    'seaborn==0.12.2',
+    'openpyxl==3.1.2',
+    'xlrd==2.0.1',
+]
+
+# Optional dependencies defined in extras_require below
 
 # Note: blpapi cannot be listed directly due to non-PyPI installation.
 # It is handled via extras_require documentation or user action.
@@ -31,18 +31,31 @@ setup(
     long_description_content_type='text/markdown',
     author="mathamphetamine", # author
     packages=find_packages(),
-    install_requires=core_reqs, # Use dynamically read core requirements
+    install_requires=core_reqs, # Use directly defined core requirements
     extras_require={
-        'bloomberg': [
-            # Cannot list blpapi here, but defines the feature.
-            # Users install via: pip install .[bloomberg]
-            # And then separately: pip install --index-url=https://bcms.bloomberg.com/pip/simple/ blpapi
-            # This key signals the optional dependency set.
+        # 'bloomberg' is a placeholder to signal the feature set exists.
+        # Actual blpapi installation is manual (see README/docs).
+        'bloomberg': [],
+        'notebook': [
+            'jupyter==1.0.0',  # Pinned based on previous requirements.txt
+            'ipywidgets==8.0.6' # Pinned based on previous requirements.txt
         ],
-        'notebook': ['jupyter', 'ipywidgets'],
-        'test': ['pytest', 'pytest-cov'],
-        'viz': ['plotly'], # Adding plotly as optional viz dep
-        # Add other optional sets if desired (e.g., 'dev', 'docs')
+        'test': [
+            'pytest==7.4.0',     # Pinned based on previous requirements.txt
+            'pytest-cov==4.1.0'  # Pinned based on previous requirements.txt
+        ],
+        'viz': [
+            'plotly==5.15.0'    # Pinned based on previous requirements.txt
+        ],
+        # We can define a 'dev' or 'all' extra for convenience
+        'dev': [
+            'jupyter==1.0.0',
+            'ipywidgets==8.0.6',
+            'pytest==7.4.0',
+            'pytest-cov==4.1.0',
+            'plotly==5.15.0'
+            # Add other dev tools like linters, formatters if desired
+        ]
     },
     entry_points={
         'console_scripts': [
